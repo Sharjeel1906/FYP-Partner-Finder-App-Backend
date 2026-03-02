@@ -127,7 +127,21 @@ class MessageSerializer(serializers.ModelSerializer):
             "timestamp",
             "is_read"
         ]
+# serializers.py
+class MessageListSerializer(serializers.ModelSerializer):
+    sender_id = serializers.IntegerField(source="sender.id")
+    receiver_id = serializers.IntegerField(source="receiver.id")
 
+    class Meta:
+        model = Message
+        fields = [
+            "id",
+            "sender_id",
+            "receiver_id",
+            "content",
+            "timestamp",
+            "is_read",
+        ]
 class ConversationSerializer(serializers.ModelSerializer):
     user1 = AppUserSerializer(read_only=True)
     user2 = AppUserSerializer(read_only=True)

@@ -1,10 +1,12 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .serializer import UserDetailSerializer, UserProfileSerializer, AppUserSerializer, ConversationSerializer,MessageSerializer
+from .serializer import UserDetailSerializer, UserProfileSerializer, AppUserSerializer, ConversationSerializer, \
+    MessageListSerializer, MessageSerializer
 from .models import AppUser, UserProfile, Conversation,Message
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db.models import Q
 
 def get_or_create_conversation(user1, user2):
     conversation = Conversation.objects.filter(
@@ -148,18 +150,35 @@ def get_all_conversations(request,user_id):
 def get_conversation_messages(request, conversation_id):
     user_id = request.data.get("user_id")
     if not user_id:
-        return Response({"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"error": "user_id is required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
     try:
         user = AppUser.objects.get(id=user_id)
     except AppUser.DoesNotExist:
-        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"error": "User not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    conversation = Conversation.objects.filter(
+        id=conversation_id
+    ).filter( Q(user1=user) | Q(user2=user)).first()
 
-    # Only fetch messages if user belongs to conversation
-    messages = Message.objects.filter(
-        conversation_id=conversation_id,
-        conversation__in=Conversation.objects.filter(user1=user) |Conversation.objects.filter(user2=user)
-    ).order_by("timestamp")
-    serializer = MessageSerializer(messages, many=True)
+    if not conversation:
+        return Response(
+            {"error": "Conversation not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    Message.objects.filter(
+        conversation=conversation,
+        receiver=user,
+        is_read=False
+    ).update(is_read=True)
+
+    messages = Message.objects.filter(conversation=conversation).order_by("timestamp")
+    serializer = MessageListSerializer(messages, many=True)
     return Response(serializer.data)
 
 @api_view(["POST"])
