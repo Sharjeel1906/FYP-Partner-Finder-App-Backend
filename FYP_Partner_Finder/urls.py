@@ -8,5 +8,5 @@ urlpatterns = [
     path("create-user/", create_user, name="create-user"),
     path("send_email/", send_invitation_email, name="send-invitation-email"),
     path('inbox/<int:user_id>/',get_all_conversations, name='get-all-conversations'),
-    path('messages/<int:conversation_id>/',get_conversation_messages, name='get-conversation-messages'),
+    path('messages/<int:user_id>/', get_conversation_messages,name='get-conversation-messages')
 ]

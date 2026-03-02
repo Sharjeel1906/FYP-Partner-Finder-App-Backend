@@ -133,36 +133,44 @@ def get_all_conversations(request,user_id):
     return Response(serializer.data)
 
 @api_view(["POST"])
-def get_conversation_messages(request, conversation_id):
-    user_id = request.data.get("user_id")
-    if not user_id:
+def get_conversation_messages(request, user_id):
+    current_user_id = request.data.get("current_user_id")
+    if not current_user_id:
         return Response(
-            {"error": "user_id is required"},
+            {"error": "current_user_id is required"},
             status=status.HTTP_400_BAD_REQUEST
         )
     try:
-        user = AppUser.objects.get(id=user_id)
+        current_user = AppUser.objects.get(id=current_user_id)
     except AppUser.DoesNotExist:
         return Response(
-            {"error": "User not found"},
+            {"error": "Current user not found"},
             status=status.HTTP_404_NOT_FOUND
         )
-    conversation = Conversation.objects.filter(
-        id=conversation_id
-    ).filter( Q(user1=user) | Q(user2=user)).first()
-
-    if not conversation:
+    try:
+        other_user = AppUser.objects.get(id=user_id)
+    except AppUser.DoesNotExist:
         return Response(
-            {"error": "Conversation not found"},
+            {"error": "Other user not found"},
             status=status.HTTP_404_NOT_FOUND
         )
 
+    user1, user2 = sorted([current_user, other_user], key=lambda u: u.id)
+
+    conversation, _ = Conversation.objects.get_or_create(
+        user1=user1,
+        user2=user2
+    )
     Message.objects.filter(
         conversation=conversation,
-        receiver=user,
+        receiver=current_user,
         is_read=False
     ).update(is_read=True)
 
     messages = Message.objects.filter(conversation=conversation).order_by("timestamp")
     serializer = MessageListSerializer(messages, many=True)
-    return Response(serializer.data)
+
+    return Response({
+        "conversation_id": conversation.id,
+        "messages": serializer.data
+    })

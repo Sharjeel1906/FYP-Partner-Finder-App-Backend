@@ -4,42 +4,44 @@ from asgiref.sync import sync_to_async
 from .models import AppUser, Conversation, Message
 from .serializer import MessageListSerializer
 
+
 class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
-        await self.accept()
+        self.sender_id = int(self.scope["url_route"]["kwargs"]["sender_id"])
+        self.receiver_id = int(self.scope["url_route"]["kwargs"]["receiver_id"])
 
-    async def disconnect(self, close_code):
-        # Remove user from room if it exists
-        if hasattr(self, "room_name"):
-            await self.channel_layer.group_discard(
-                self.room_name,
-                self.channel_name
-            )
-
-    async def receive(self, text_data):
-        try:
-            data = json.loads(text_data)
-
-            sender_id = int(data["sender_id"])
-            receiver_id = int(data["receiver_id"])
-            content = data["content"].strip()
-
-            if not content:
-                return
-
-        except (KeyError, ValueError, json.JSONDecodeError):
-            # Ignore malformed messages
-            return
-
-        # Create a unique room for 1-to-1 chat
-        self.room_name = f"chat_{min(sender_id, receiver_id)}_{max(sender_id, receiver_id)}"
+        # 🔑 SAME room name for both users
+        self.room_name = f"chat_{min(self.sender_id, self.receiver_id)}_{max(self.sender_id, self.receiver_id)}"
 
         await self.channel_layer.group_add(
             self.room_name,
             self.channel_name
         )
-        message = await self.save_message(sender_id, receiver_id, content)
+
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.room_name,
+            self.channel_name
+        )
+
+    async def receive(self, text_data):
+        try:
+            data = json.loads(text_data)
+            content = data["content"].strip()
+            if not content:
+                return
+        except (KeyError, ValueError, json.JSONDecodeError):
+            return
+
+        message = await self.save_message(
+            self.sender_id,
+            self.receiver_id,
+            content
+        )
+
         await self.channel_layer.group_send(
             self.room_name,
             {
@@ -47,6 +49,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "message": MessageListSerializer(message).data
             }
         )
+
     async def chat_message(self, event):
         await self.send(text_data=json.dumps(event["message"]))
 
@@ -55,11 +58,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         sender = AppUser.objects.get(id=sender_id)
         receiver = AppUser.objects.get(id=receiver_id)
 
-        # Find existing conversation (either order)
         conversation = (
             Conversation.objects.filter(user1=sender, user2=receiver).first()
-            or
-            Conversation.objects.filter(user1=receiver, user2=sender).first()
+            or Conversation.objects.filter(user1=receiver, user2=sender).first()
         )
 
         if not conversation:
