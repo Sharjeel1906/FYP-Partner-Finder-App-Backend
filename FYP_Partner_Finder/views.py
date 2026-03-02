@@ -8,20 +8,6 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.db.models import Q
 
-def get_or_create_conversation(user1, user2):
-    conversation = Conversation.objects.filter(
-        user1=user1, user2=user2
-    ).first() or Conversation.objects.filter(
-        user1=user2, user2=user1
-    ).first()
-
-    if not conversation:
-        conversation = Conversation.objects.create(
-            user1=user1,
-            user2=user2
-        )
-    return conversation
-
 @api_view(["GET"])
 def get_all_users_details(request):
     users =  AppUser.objects.all()
@@ -180,24 +166,3 @@ def get_conversation_messages(request, conversation_id):
     messages = Message.objects.filter(conversation=conversation).order_by("timestamp")
     serializer = MessageListSerializer(messages, many=True)
     return Response(serializer.data)
-
-@api_view(["POST"])
-def send_message(request, user_id):
-    receiver_id = request.data.get("receiver_id")
-    content = request.data.get("content")
-
-    if not receiver_id or not content:
-        return Response({"error": "sender_id and content are required"}, status=status.HTTP_400_BAD_REQUEST)
-    try:
-        sender = AppUser.objects.get(id=user_id)
-        receiver = AppUser.objects.get(id=receiver_id)
-    except AppUser.DoesNotExist:
-        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-    conversation = get_or_create_conversation(sender, receiver)
-    message = Message.objects.create(
-        conversation=conversation,
-        sender=sender,
-        content=content
-    )
-    serializer = MessageSerializer(message)
-    return Response(serializer.data, status=status.HTTP_201_CREATED)

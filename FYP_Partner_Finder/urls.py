@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import get_all_users_details, get_specific_user_details,update_user,create_user,send_invitation_email,get_all_conversations,get_conversation_messages,send_message
+from .views import get_all_users_details, get_specific_user_details,update_user,create_user,send_invitation_email,get_all_conversations,get_conversation_messages
 
 urlpatterns = [
     path("users/", get_all_users_details, name="all-users"),
@@ -9,6 +9,4 @@ urlpatterns = [
     path("send_email/", send_invitation_email, name="send-invitation-email"),
     path('inbox/<int:user_id>/',get_all_conversations, name='get-all-conversations'),
     path('messages/<int:conversation_id>/',get_conversation_messages, name='get-conversation-messages'),
-    path('send/<int:user_id>/',send_message, name='send-message'),
-
 ]
