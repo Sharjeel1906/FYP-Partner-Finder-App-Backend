@@ -22,7 +22,6 @@ def get_all_users_details(request):
     serializer = UserDetailSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_specific_user_details(request, user_id):
@@ -36,7 +35,6 @@ def get_specific_user_details(request, user_id):
 
     serializer = UserDetailSerializer(user)
     return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
