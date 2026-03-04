@@ -36,6 +36,8 @@ def get_specific_user_details(request, user_id):
     serializer = UserDetailSerializer(user)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def create_user(request):
