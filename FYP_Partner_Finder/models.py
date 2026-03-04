@@ -23,7 +23,6 @@ class UserProfile(models.Model):
     github_link = models.URLField(blank=True)
     portfolio_link = models.URLField(blank=True)
 
-
 class Experience(models.Model):
     user = models.ForeignKey(
         User,
