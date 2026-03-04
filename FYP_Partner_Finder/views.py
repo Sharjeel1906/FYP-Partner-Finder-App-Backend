@@ -19,6 +19,7 @@ from .models import UserProfile, Conversation, Message
 @permission_classes([AllowAny])
 def get_all_users_details(request):
     users = User.objects.all()
+
     serializer = UserDetailSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
