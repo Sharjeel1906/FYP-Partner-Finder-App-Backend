@@ -45,7 +45,14 @@ INSTALLED_APPS = [
     'channels',
 
 ]
-
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+}
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -76,7 +83,9 @@ TEMPLATES = [
 WSGI_APPLICATION = 'myproject.wsgi.application'
 ASGI_APPLICATION = 'myproject.asgi.application'
 
-
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 CHANNEL_LAYERS = {
     "default":{
         "BACKEND":"channels.layers.InMemoryChannelLayer",
@@ -141,5 +150,5 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'sharjeelahmed1906@gmail.com'
-EMAIL_HOST_PASSWORD = 'email_app_pass'
+EMAIL_HOST_PASSWORD = 'covhwjhauprppxtn'
 DEFAULT_FROM_EMAIL = 'sharjeelahmed1906@gmail.com'

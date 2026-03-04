@@ -1,10 +1,26 @@
 from rest_framework import serializers
-from .models import AppUser, UserProfile, Skill, Experience,Message,Conversation
+from django.contrib.auth.models import User
+from .models import UserProfile, Skill, Experience,Message,Conversation
 
 class AppUserSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=True, allow_blank=False)
+    password = serializers.CharField(write_only=True, required=True, min_length=8)
+
     class Meta:
-        model = AppUser
-        fields = ["id", "username", "email"]
+        model = User
+        fields = ["id", "username", "email", "password"]
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("app user with this email already exists.")
+        return value
+
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
 
 class SkillSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)  # <-- read-only
@@ -21,18 +37,17 @@ class ExperienceSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     skills = SkillSerializer(many=True, required=False)
     experiences = ExperienceSerializer(many=True, required=False)
-
     class Meta:
         model = UserProfile
         fields = [
-            "id", "user", "gender", "role", "about",
-            "qualifications", "class_name", "program",
-            "semester", "domain", "whatsapp_no", "passing_year",
-            "pfp_path", "cv_path",
-            "linked_in_link", "github_link", "portfolio_link",
-            "skills", "experiences"
+                "id", "user", "gender", "role", "about",
+                "qualifications", "class_name", "program",
+                "semester", "domain", "whatsapp_no", "passing_year",
+                "pfp_path", "cv_path",
+                "linked_in_link", "github_link", "portfolio_link",
+                "skills", "experiences"
         ]
-
+        read_only_fields = ["user"]
     def create(self, validated_data):
         skills_data = validated_data.pop("skills", [])
         experiences_data = validated_data.pop("experiences", [])
@@ -108,7 +123,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     experiences = ExperienceNestedSerializer(many=True, read_only=True)
 
     class Meta:
-        model = AppUser
+        model = User
         fields = ["id", "username", "email", "profile", "skills", "experiences"]
 
 #------------------Messenger-----------------------#
@@ -148,6 +163,7 @@ class ConversationSerializer(serializers.ModelSerializer):
     user2 = AppUserSerializer(read_only=True)
 
     class Meta:
+        unique_together = ("user1", "user2")
         model = Conversation
         fields = [
             "id",

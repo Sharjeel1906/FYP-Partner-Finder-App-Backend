@@ -5,13 +5,14 @@
       <option name="ignoredPackages">
         <list>
           <option value="djangorestframework" />
+          <option value="djangorestframework" />
         </list>
       </option>
     </inspection_tool>
     <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoredIdentifiers">
         <list>
-          <option value="Client" />
+          <option value="myproject.myproject.asgi.FYP_Partner_Finder" />
         </list>
       </option>
     </inspection_tool>
