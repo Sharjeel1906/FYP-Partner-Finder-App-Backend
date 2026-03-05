@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
 from django.conf import settings
+from drf_spectacular.utils import extend_schema, OpenApiResponse
+
 from .serializer import (
     UserDetailSerializer,
     UserProfileSerializer,
@@ -15,14 +17,23 @@ from .serializer import (
 )
 from .models import UserProfile, Conversation, Message
 
+
+# ------------------ Users ------------------ #
+
+@extend_schema(
+    responses=UserDetailSerializer(many=True)
+)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_all_users_details(request):
     users = User.objects.all()
-
     serializer = UserDetailSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+@extend_schema(
+    responses=UserDetailSerializer
+)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_specific_user_details(request, user_id):
@@ -38,7 +49,10 @@ def get_specific_user_details(request, user_id):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-
+@extend_schema(
+    request=AppUserSerializer,
+    responses=OpenApiResponse(description="User created successfully")
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def create_user(request):
@@ -57,10 +71,14 @@ def create_user(request):
         )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+@extend_schema(
+    request=UserProfileSerializer,
+    responses=UserDetailSerializer
+)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def update_user(request, user_id):
-
     if request.user.id != user_id:
         return Response(
             {"error": "You can only update your own profile"},
@@ -75,27 +93,26 @@ def update_user(request, user_id):
         )
     try:
         profile = UserProfile.objects.get(user=user)
-        serializer = UserProfileSerializer(
-            profile,
-            data=request.data,
-            partial=True
-        )
+        serializer = UserProfileSerializer(profile, data=request.data, partial=True)
     except UserProfile.DoesNotExist:
         serializer = UserProfileSerializer(data=request.data)
 
     if serializer.is_valid():
         serializer.save(user=user)
         full_serializer = UserDetailSerializer(user)
-        return Response(
-            full_serializer.data,
-            status=status.HTTP_200_OK
-        )
+        return Response(full_serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+# ------------------ Email ------------------ #
+
+@extend_schema(
+    request=None,
+    responses=OpenApiResponse(description="Invitation email sent successfully")
+)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def send_invitation_email(request):
-
     recipient_email = request.data.get("recipient_email")
     recipient_name = request.data.get("recipient_name")
 
@@ -108,23 +125,23 @@ def send_invitation_email(request):
     sender_name = user.username or user.email or "A user"
     subject = "Invitation from FYP Partner Finder App"
     body = f"""
-        Hello {recipient_name},
+Hello {recipient_name},
 
-        I hope this message finds you well.
+I hope this message finds you well.
 
-        My name is {sender_name}, and I am currently looking for talented and enthusiastic team members to collaborate on a Final Year Project (FYP). 
-        I came across your profile and believe your skills would be a great addition to my team.
+My name is {sender_name}, and I am currently looking for talented and enthusiastic team members to collaborate on a Final Year Project (FYP). 
+I came across your profile and believe your skills would be a great addition to my team.
 
-        You are officially invited to join my team for building an innovative project using the FYP Partner Finder App. 
-        This project aims to create a meaningful impact while providing an excellent opportunity to enhance your technical and collaborative skills.
+You are officially invited to join my team for building an innovative project using the FYP Partner Finder App. 
+This project aims to create a meaningful impact while providing an excellent opportunity to enhance your technical and collaborative skills.
 
-        If you are interested in joining, please reply to this email, and we can discuss the project details further.
+If you are interested in joining, please reply to this email, and we can discuss the project details further.
 
-        Looking forward to collaborating with you!
+Looking forward to collaborating with you!
 
-        Best regards,
-        {sender_name}
-        """
+Best regards,
+{sender_name}
+"""
     try:
         send_mail(
             subject,
@@ -144,6 +161,11 @@ def send_invitation_email(request):
         )
 
 
+# ------------------ Conversations ------------------ #
+
+@extend_schema(
+    responses=ConversationSerializer(many=True)
+)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def get_all_conversations(request):
@@ -157,6 +179,12 @@ def get_all_conversations(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    responses=OpenApiResponse(
+        response=MessageListSerializer(many=True),
+        description="List of messages in conversation"
+    )
+)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def get_conversation_messages(request, user_id):
@@ -174,16 +202,9 @@ def get_conversation_messages(request, user_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    user1, user2 = sorted(
-        [current_user, other_user],
-        key=lambda u: u.id
-    )
-    conversation, _ = Conversation.objects.get_or_create( user1=user1, user2=user2)
-    Message.objects.filter(
-        conversation=conversation,
-        receiver=current_user,
-        is_read=False
-    ).update(is_read=True)
+    user1, user2 = sorted([current_user, other_user], key=lambda u: u.id)
+    conversation, _ = Conversation.objects.get_or_create(user1=user1, user2=user2)
+    Message.objects.filter(conversation=conversation, receiver=current_user, is_read=False).update(is_read=True)
     messages = Message.objects.filter(conversation=conversation).order_by("timestamp")
     serializer = MessageListSerializer(messages, many=True)
     return Response({
