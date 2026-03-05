@@ -87,12 +87,9 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 CHANNEL_LAYERS = {
-    "default":{
-        "BACKEND":"channels.layers.InMemoryChannelLayer",
-    },
-    "CONFIG":{
-            "hosts": [("127.0.0.1", 6379)],
-    },
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
 }
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
