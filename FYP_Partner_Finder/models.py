@@ -3,11 +3,11 @@ from django.contrib.auth.models import User
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    gender = models.BooleanField()
-    role = models.BooleanField()
+    gender = models.CharField()
+    role = models.CharField()
     about = models.TextField()
 
-    qualifications = models.CharField(max_length=200)
+    section = models.CharField(max_length=200)
     class_name = models.CharField(max_length=100)
     program = models.CharField(max_length=100)
 
@@ -29,7 +29,7 @@ class Experience(models.Model):
         on_delete=models.CASCADE,
         related_name="experiences"
     )
-    status = models.CharField(max_length=100,blank=True)
+    position = models.CharField(max_length=100,blank=True)
     title = models.CharField(max_length=150,blank=True)
     company = models.CharField(max_length=150,blank=True)
     duration = models.CharField(max_length=50,blank=True)

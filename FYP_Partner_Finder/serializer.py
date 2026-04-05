@@ -32,7 +32,7 @@ class ExperienceSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)  # <-- read-only
     class Meta:
         model = Experience
-        fields = ["id", "user", "status", "title", "company", "duration"]
+        fields = ["id", "user", "position", "title", "company", "duration"]
 
 class UserProfileSerializer(serializers.ModelSerializer):
     skills = SkillSerializer(many=True, required=False)
@@ -41,7 +41,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = [
                 "id", "user", "gender", "role", "about",
-                "qualifications", "class_name", "program",
+                "section", "class_name", "program",
                 "semester", "domain", "whatsapp_no", "passing_year",
                 "pfp_path", "cv_path",
                 "linked_in_link", "github_link", "portfolio_link",
@@ -94,7 +94,7 @@ class SkillNestedSerializer(serializers.ModelSerializer):
 class ExperienceNestedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Experience
-        fields = ["status", "title", "company", "duration"]
+        fields = ["position", "title", "company", "duration"]
 
 class UserProfileNestedSerializer(serializers.ModelSerializer):
     class Meta:
@@ -103,7 +103,7 @@ class UserProfileNestedSerializer(serializers.ModelSerializer):
             "gender",
             "role",
             "about",
-            "qualifications",
+            "section",
             "class_name",
             "program",
             "semester",
