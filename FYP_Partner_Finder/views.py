@@ -3,11 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth.models import User
-from django.contrib.auth.hashers import make_password
 from django.core.mail import send_mail
 from django.conf import settings
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-
 from .serializer import (
     UserDetailSerializer,
     UserProfileSerializer,
@@ -16,7 +14,6 @@ from .serializer import (
     MessageListSerializer,
 )
 from .models import UserProfile, Conversation, Message
-
 
 # ------------------ Users ------------------ #
 
