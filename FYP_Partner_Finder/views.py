@@ -125,22 +125,22 @@ def send_invitation_email(request):
     sender_name = user.username or user.email or "A user"
     subject = "Invitation from FYP Partner Finder App"
     body = f"""
-Hello {recipient_name},
-
-I hope this message finds you well.
-
-My name is {sender_name}, and I am currently looking for talented and enthusiastic team members to collaborate on a Final Year Project (FYP). 
-I came across your profile and believe your skills would be a great addition to my team.
-
-You are officially invited to join my team for building an innovative project using the FYP Partner Finder App. 
-This project aims to create a meaningful impact while providing an excellent opportunity to enhance your technical and collaborative skills.
-
-If you are interested in joining, please reply to this email, and we can discuss the project details further.
-
-Looking forward to collaborating with you!
-
-Best regards,
-{sender_name}
+    Hello {recipient_name},
+    
+    I hope this message finds you well.
+    
+    My name is {sender_name}, and I am currently looking for talented and enthusiastic team members to collaborate on a Final Year Project (FYP). 
+    I came across your profile and believe your skills would be a great addition to my team.
+    
+    You are officially invited to join my team for building an innovative project using the FYP Partner Finder App. 
+    This project aims to create a meaningful impact while providing an excellent opportunity to enhance your technical and collaborative skills.
+    
+    If you are interested in joining, please reply to this email, and we can discuss the project details further.
+    
+    Looking forward to collaborating with you!
+    
+    Best regards,
+    {sender_name}
 """
     try:
         send_mail(

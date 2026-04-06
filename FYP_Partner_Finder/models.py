@@ -37,7 +37,6 @@ class Experience(models.Model):
     def __str__(self):
         return f"{self.title} at {self.company}"
 
-
 class Skill(models.Model):
     user = models.ForeignKey(
         User,
