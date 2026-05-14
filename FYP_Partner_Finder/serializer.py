@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserProfile, Skill,Message,Conversation
+from .models import UserProfile, Skill, Message, Conversation, TeamMember , Team
+
 
 class AppUserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True, allow_blank=False)
@@ -147,4 +148,38 @@ class ConversationSerializer(serializers.ModelSerializer):
             "user1",
             "user2",
             "created_at",
+        ]
+
+        # -------------------Teams Serializer ------------------#
+
+class UserMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "email"]
+
+class TeamMemberSerializer(serializers.ModelSerializer):
+    user = UserMiniSerializer(read_only=True)
+
+    class Meta:
+        model = TeamMember
+        fields = ["id", "user", "mem_role", "joined_at"]
+
+class TeamSerializer(serializers.ModelSerializer):
+    members = TeamMemberSerializer(
+        source="team_member_set",
+        many=True,
+        read_only=True
+    )
+
+    class Meta:
+        model = Team
+        fields = [
+            "id",
+            "team_name",
+            "project_domain",
+            "req_role",
+            "available_team_size",
+            "created_at",
+            "members",
+            "group_lead",
         ]

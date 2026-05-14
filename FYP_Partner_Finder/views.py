@@ -12,8 +12,11 @@ from .serializer import (
     AppUserSerializer,
     ConversationSerializer,
     MessageListSerializer,
+    TeamMemberSerializer,
+    TeamSerializer
 )
-from .models import UserProfile, Conversation, Message,Skill
+from .models import UserProfile, Conversation, Message, Skill, Team, TeamMember
+
 
 # ------------------ Users ------------------ #
 
@@ -77,30 +80,31 @@ def create_user(request):
 @permission_classes([IsAuthenticated])
 def update_user(request):
     try:
-        user = User.objects.get(id=request.user.id)
-        profile = UserProfile.objects.get(user=user)
-
+        user = request.user
         data = request.data.copy()
-
-        serializer = UserProfileSerializer(profile, data=data, partial=True)
-
+        try:
+            profile = UserProfile.objects.get(user=user)
+            # UPDATE EXISTING PROFILE
+            serializer = UserProfileSerializer(
+                profile,
+                data=data,
+                partial=True
+            )
+        except UserProfile.DoesNotExist:
+            # CREATE NEW PROFILE FROM FORM DATA
+            serializer = UserProfileSerializer(data=data)
         if serializer.is_valid():
-            profile = serializer.save(user=user)
-
-            # ✅ FORCE HANDLE SKILLS HERE
+            serializer.save(user=user)
             skills = request.data.getlist("skills")
-
             if skills:
                 Skill.objects.filter(user=user).delete()
-
                 Skill.objects.bulk_create([
-                    Skill(user=user, name=s) for s in skills
+                    Skill(user=user, name=s)
+                    for s in skills
                 ])
 
             return Response(UserDetailSerializer(user).data)
-
         return Response(serializer.errors, status=400)
-
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 # ------------------ Email ------------------ #
@@ -210,3 +214,130 @@ def get_conversation_messages(request, user_id):
         "conversation_id": conversation.id,
         "messages": serializer.data
     }, status=status.HTTP_200_OK)
+
+# ------------------ Teams------------------ #
+@extend_schema(
+    responses={
+        200: TeamSerializer(many=True),
+    },
+    description="Get all teams"
+)
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_all_teams(request):
+    teams = Team.objects.all()
+    serializer = TeamSerializer(teams, many=True)
+    return Response(serializer.data)
+
+@extend_schema(
+    request=TeamSerializer,
+    responses={
+        201: OpenApiResponse(description="Team created successfully"),
+        403: OpenApiResponse(description="Only leaders can create teams"),
+    },
+    description="Create a new team"
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_team(request):
+
+    profile = UserProfile.objects.get(user=request.user)
+    if profile.role != "Leader":
+        return Response(
+            {
+                "message": "Change your role to Leader in profile to create a team"
+            },
+            status=403
+        )
+    team = Team.objects.create(
+        team_name=request.data.get("team_name"),
+        project_domain=request.data.get("project_domain"),
+        req_role=request.data.get("req_role"),
+        available_team_size=request.data.get("team_size"),
+        group_lead=request.user.username,
+    )
+    TeamMember.objects.create(
+        user=request.user,
+        team=team,
+        mem_role="leader"
+    )
+    return Response({
+        "message": "Team created successfully",
+        "team_id": team.id
+    }, status=201)
+
+@extend_schema(
+    request=TeamMemberSerializer,
+    responses={
+        201: OpenApiResponse(description="Member added successfully"),
+        400: OpenApiResponse(description="User already in team or team full"),
+        404: OpenApiResponse(description="User or Team not found"),
+    },
+    description="Add member to team"
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def add_member(request):
+    try:
+        user_to_be_mem = User.objects.get(id=request.data.get("mem_id"))
+        team = Team.objects.get(id=request.data.get("team_id"))
+
+        if TeamMember.objects.filter(user=user_to_be_mem, team=team).exists():
+            return Response({"message": "You are already in the team already in team"}, status=400)
+
+        if TeamMember.objects.filter(team=team).count() >= team.team_size:
+            return Response({"message": "Team is full"}, status=400)
+
+        member = TeamMember.objects.create(
+            user=user_to_be_mem,
+            team=team,
+            mem_role=request.data.get("mem_role", "member")
+        )
+        return Response({
+            "message": "Member added successfully",
+            "member_id": member.id
+        }, status=201)
+
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+
+    except Team.DoesNotExist:
+        return Response({"error": "Team not found"}, status=404)
+
+@extend_schema(
+    responses={
+        200: TeamSerializer,
+        404: OpenApiResponse(description="Team not found"),
+    },
+    description="Get team details with members"
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_team_details(request, team_id):
+    try:
+        team = Team.objects.get(id=team_id)
+        members = TeamMember.objects.filter(team=team)
+
+        data = {
+            "id": team.id,
+            "team_name": team.team_name,
+            "project_domain": team.project_domain,
+            "req_role": team.req_role,
+            "available_team_size": team.team_size,
+            "created_at": team.created_at,
+            "members": [
+                {
+                    "id": m.id,
+                    "user_id": m.user.id,
+                    "username": m.user.username,
+                    "email": m.user.email,
+                    "mem_role": m.mem_role,
+                    "joined_at": m.joined_at
+                }
+                for m in members
+            ]
+        }
+        return Response(data)
+
+    except Team.DoesNotExist:
+        return Response({"error": "Team not found"}, status=404)
