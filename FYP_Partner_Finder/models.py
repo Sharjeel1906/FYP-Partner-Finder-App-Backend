@@ -13,7 +13,7 @@ class UserProfile(models.Model):
 
     semester = models.PositiveSmallIntegerField()
     domain = models.CharField(max_length=100)
-    whatsapp_no = models.CharField(max_length=20)
+    experience= models.CharField(max_length=100)
     passing_year = models.PositiveSmallIntegerField()
 
     pfp_path  = models.FileField(upload_to="profile_images/",blank=True)
@@ -22,21 +22,6 @@ class UserProfile(models.Model):
     linked_in_link = models.URLField(blank=True)
     github_link = models.URLField(blank=True)
     portfolio_link = models.URLField(blank=True)
-
-class Experience(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="experiences"
-    )
-    position = models.CharField(max_length=100,blank=True)
-    title = models.CharField(max_length=150,blank=True)
-    company = models.CharField(max_length=150,blank=True)
-    duration = models.CharField(max_length=50,blank=True)
-
-    def __str__(self):
-        return f"{self.title} at {self.company}"
-
 
 class Skill(models.Model):
     user = models.ForeignKey(

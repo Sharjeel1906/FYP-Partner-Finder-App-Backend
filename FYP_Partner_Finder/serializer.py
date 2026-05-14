@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserProfile, Skill, Experience,Message,Conversation
+from .models import UserProfile, Skill,Message,Conversation
 
 class AppUserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True, allow_blank=False)
@@ -28,60 +28,43 @@ class SkillSerializer(serializers.ModelSerializer):
         model = Skill
         fields = ["id", "user", "name"]
 
-class ExperienceSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(read_only=True)  # <-- read-only
-    class Meta:
-        model = Experience
-        fields = ["id", "user", "position", "title", "company", "duration"]
 
 class UserProfileSerializer(serializers.ModelSerializer):
     skills = SkillSerializer(many=True, required=False)
-    experiences = ExperienceSerializer(many=True, required=False)
     class Meta:
         model = UserProfile
         fields = [
                 "id", "user", "gender", "role", "about",
                 "section", "class_name", "program",
-                "semester", "domain", "whatsapp_no", "passing_year",
+                "semester", "domain", "passing_year",
                 "pfp_path", "cv_path",
                 "linked_in_link", "github_link", "portfolio_link",
-                "skills", "experiences"
+                "skills"
         ]
         read_only_fields = ["user"]
+
     def create(self, validated_data):
         skills_data = validated_data.pop("skills", [])
-        experiences_data = validated_data.pop("experiences", [])
 
         profile = UserProfile.objects.create(**validated_data)
-        user = profile.user
 
-        # Add skills
         for skill in skills_data:
-            Skill.objects.create(user=user, **skill)
-
-        # Add experiences
-        for exp in experiences_data:
-            Experience.objects.create(user=user, **exp)
+            Skill.objects.create(user=profile.user, name=skill["name"])
 
         return profile
 
     def update(self, instance, validated_data):
         skills_data = validated_data.pop("skills", [])
-        experiences_data = validated_data.pop("experiences", [])
 
-        # Update profile fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+
         instance.save()
-        user = instance.user
 
-        # Add new skills without deleting existing ones
+        Skill.objects.filter(user=instance.user).delete()
+
         for skill in skills_data:
-            Skill.objects.create(user=user, **skill)
-
-        # Add new experiences without deleting existing ones
-        for exp in experiences_data:
-            Experience.objects.create(user=user, **exp)
+            Skill.objects.create(user=instance.user, name=skill["name"])
 
         return instance
 
@@ -91,10 +74,6 @@ class SkillNestedSerializer(serializers.ModelSerializer):
         model = Skill
         fields = ["name"]
 
-class ExperienceNestedSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Experience
-        fields = ["position", "title", "company", "duration"]
 
 class UserProfileNestedSerializer(serializers.ModelSerializer):
     class Meta:
@@ -108,23 +87,21 @@ class UserProfileNestedSerializer(serializers.ModelSerializer):
             "program",
             "semester",
             "domain",
-            "whatsapp_no",
             "passing_year",
             "pfp_path",
             "cv_path",
             "linked_in_link",
             "github_link",
-            "portfolio_link"
+            "portfolio_link",
+            "experience"
         ]
 
 class UserDetailSerializer(serializers.ModelSerializer):
     profile = UserProfileNestedSerializer(source="userprofile", read_only=True)
     skills = SkillNestedSerializer(many=True, read_only=True)
-    experiences = ExperienceNestedSerializer(many=True, read_only=True)
-
     class Meta:
         model = User
-        fields = ["id", "username", "email", "profile", "skills", "experiences"]
+        fields = ["id", "username", "email", "profile", "skills"]
 
 #------------------Messenger-----------------------#
 class MessageSerializer(serializers.ModelSerializer):

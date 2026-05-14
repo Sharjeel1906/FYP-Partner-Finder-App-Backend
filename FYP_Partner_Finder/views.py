@@ -13,7 +13,7 @@ from .serializer import (
     ConversationSerializer,
     MessageListSerializer,
 )
-from .models import UserProfile, Conversation, Message
+from .models import UserProfile, Conversation, Message,Skill
 
 # ------------------ Users ------------------ #
 
@@ -75,32 +75,34 @@ def create_user(request):
 )
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def update_user(request, user_id):
-    if request.user.id != user_id:
-        return Response(
-            {"error": "You can only update your own profile"},
-            status=status.HTTP_403_FORBIDDEN
-        )
+def update_user(request):
     try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return Response(
-            {"error": "User does not exist"},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    try:
+        user = User.objects.get(id=request.user.id)
         profile = UserProfile.objects.get(user=user)
-        serializer = UserProfileSerializer(profile, data=request.data, partial=True)
-    except UserProfile.DoesNotExist:
-        serializer = UserProfileSerializer(data=request.data)
 
-    if serializer.is_valid():
-        serializer.save(user=user)
-        full_serializer = UserDetailSerializer(user)
-        return Response(full_serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data.copy()
 
+        serializer = UserProfileSerializer(profile, data=data, partial=True)
 
+        if serializer.is_valid():
+            profile = serializer.save(user=user)
+
+            # ✅ FORCE HANDLE SKILLS HERE
+            skills = request.data.getlist("skills")
+
+            if skills:
+                Skill.objects.filter(user=user).delete()
+
+                Skill.objects.bulk_create([
+                    Skill(user=user, name=s) for s in skills
+                ])
+
+            return Response(UserDetailSerializer(user).data)
+
+        return Response(serializer.errors, status=400)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
 # ------------------ Email ------------------ #
 
 @extend_schema(
