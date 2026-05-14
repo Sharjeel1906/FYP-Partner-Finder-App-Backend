@@ -5,7 +5,6 @@ from django.contrib.auth.models import User
 from .models import Conversation, Message
 from .serializer import MessageListSerializer
 
-
 class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
