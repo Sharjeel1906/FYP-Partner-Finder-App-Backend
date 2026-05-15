@@ -13,10 +13,15 @@ from .serializer import (
     ConversationSerializer,
     MessageListSerializer,
     TeamMemberSerializer,
-    TeamSerializer
+    TeamSerializer,
+    EmailTokenObtainPairSerializer
 )
 from .models import UserProfile, Conversation, Message, Skill, Team, TeamMember
+from rest_framework_simplejwt.views import TokenObtainPairView
 
+
+class EmailLoginView(TokenObtainPairView):
+    serializer_class = EmailTokenObtainPairSerializer
 
 # ------------------ Users ------------------ #
 
@@ -107,6 +112,8 @@ def update_user(request):
         return Response(serializer.errors, status=400)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+
 # ------------------ Email ------------------ #
 
 @extend_schema(
@@ -174,8 +181,8 @@ def send_invitation_email(request):
 def get_all_conversations(request):
     user = request.user
     conversations = (
-        Conversation.objects.filter(user1=user) |
-        Conversation.objects.filter(user2=user)
+            Conversation.objects.filter(user1=user) |
+            Conversation.objects.filter(user2=user)
     ).order_by("created_at")
 
     serializer = ConversationSerializer(conversations, many=True)
@@ -215,6 +222,7 @@ def get_conversation_messages(request, user_id):
         "messages": serializer.data
     }, status=status.HTTP_200_OK)
 
+
 # ------------------ Teams------------------ #
 @extend_schema(
     responses={
@@ -229,6 +237,7 @@ def get_all_teams(request):
     serializer = TeamSerializer(teams, many=True)
     return Response(serializer.data)
 
+
 @extend_schema(
     request=TeamSerializer,
     responses={
@@ -240,7 +249,6 @@ def get_all_teams(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_team(request):
-
     profile = UserProfile.objects.get(user=request.user)
     if profile.role != "Leader":
         return Response(
@@ -265,6 +273,7 @@ def create_team(request):
         "message": "Team created successfully",
         "team_id": team.id
     }, status=201)
+
 
 @extend_schema(
     request=TeamMemberSerializer,
@@ -303,6 +312,7 @@ def add_member(request):
 
     except Team.DoesNotExist:
         return Response({"error": "Team not found"}, status=404)
+
 
 @extend_schema(
     responses={

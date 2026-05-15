@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class Team(models.Model):
     team_name = models.CharField(max_length=100)
     project_domain = models.CharField(max_length=100)
@@ -22,6 +23,7 @@ class TeamMember(models.Model):
     class Meta:
         unique_together = ("user", "team")
 
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     gender = models.CharField()
@@ -34,15 +36,16 @@ class UserProfile(models.Model):
 
     semester = models.PositiveSmallIntegerField()
     domain = models.CharField(max_length=100)
-    experience= models.CharField(max_length=100)
+    experience = models.CharField(max_length=100)
     passing_year = models.PositiveSmallIntegerField()
 
-    pfp_path  = models.FileField(upload_to="profile_images/",blank=True)
-    cv_path = models.FileField(upload_to="cvs/",blank =True)
+    pfp_path = models.FileField(upload_to="profile_images/", blank=True)
+    cv_path = models.FileField(upload_to="cvs/", blank=True)
 
     linked_in_link = models.URLField(blank=True)
     github_link = models.URLField(blank=True)
     portfolio_link = models.URLField(blank=True)
+
 
 class Skill(models.Model):
     user = models.ForeignKey(
@@ -50,10 +53,11 @@ class Skill(models.Model):
         on_delete=models.CASCADE,
         related_name="skills"
     )
-    name = models.CharField(max_length=100,blank=True)
+    name = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return self.name
+
 
 class Conversation(models.Model):
     user1 = models.ForeignKey(

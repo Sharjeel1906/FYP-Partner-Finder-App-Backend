@@ -1,6 +1,39 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserProfile, Skill, Message, Conversation, TeamMember , Team
+from .models import UserProfile, Skill, Message, Conversation, TeamMember, Team
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+
+class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+    username_field = "email"
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError(
+                {"error": "Invalid email or password"}
+            )
+        if not user.check_password(password):
+            raise serializers.ValidationError(
+                {"error": "Invalid email or password"}
+            )
+        refresh = self.get_token(user)
+
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+            }
+        }
 
 
 class AppUserSerializer(serializers.ModelSerializer):
@@ -23,8 +56,10 @@ class AppUserSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+
 class SkillSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)  # <-- read-only
+
     class Meta:
         model = Skill
         fields = ["id", "user", "name"]
@@ -32,15 +67,16 @@ class SkillSerializer(serializers.ModelSerializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     skills = SkillSerializer(many=True, required=False)
+
     class Meta:
         model = UserProfile
         fields = [
-                "id", "user", "gender", "role", "about",
-                "section", "class_name", "program",
-                "semester", "domain", "passing_year",
-                "pfp_path", "cv_path",
-                "linked_in_link", "github_link", "portfolio_link",
-                "skills"
+            "id", "user", "gender", "role", "about",
+            "section", "class_name", "program",
+            "semester", "domain", "passing_year",
+            "pfp_path", "cv_path",
+            "linked_in_link", "github_link", "portfolio_link",
+            "skills"
         ]
         read_only_fields = ["user"]
 
@@ -69,7 +105,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         return instance
 
-#-------------------Nested Serializer ------------------#
+
+# -------------------Nested Serializer ------------------#
 class SkillNestedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Skill
@@ -97,14 +134,17 @@ class UserProfileNestedSerializer(serializers.ModelSerializer):
             "experience"
         ]
 
+
 class UserDetailSerializer(serializers.ModelSerializer):
     profile = UserProfileNestedSerializer(source="userprofile", read_only=True)
     skills = SkillNestedSerializer(many=True, read_only=True)
+
     class Meta:
         model = User
         fields = ["id", "username", "email", "profile", "skills"]
 
-#------------------Messenger-----------------------#
+
+# ------------------Messenger-----------------------#
 class MessageSerializer(serializers.ModelSerializer):
     sender = AppUserSerializer(read_only=True)
     receiver = AppUserSerializer(read_only=True)  # NEW
@@ -115,11 +155,12 @@ class MessageSerializer(serializers.ModelSerializer):
             "id",
             "conversation",
             "sender",
-            "receiver",      # NEW
+            "receiver",  # NEW
             "content",
             "timestamp",
             "is_read"
         ]
+
 
 class MessageListSerializer(serializers.ModelSerializer):
     sender_id = serializers.IntegerField(source="sender.id")
@@ -135,6 +176,7 @@ class MessageListSerializer(serializers.ModelSerializer):
             "timestamp",
             "is_read",
         ]
+
 
 class ConversationSerializer(serializers.ModelSerializer):
     user1 = AppUserSerializer(read_only=True)
@@ -152,10 +194,14 @@ class ConversationSerializer(serializers.ModelSerializer):
 
         # -------------------Teams Serializer ------------------#
 
+# ------------------Team-----------------------#
+
+
 class UserMiniSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "username", "email"]
+
 
 class TeamMemberSerializer(serializers.ModelSerializer):
     user = UserMiniSerializer(read_only=True)
@@ -163,6 +209,7 @@ class TeamMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeamMember
         fields = ["id", "user", "mem_role", "joined_at"]
+
 
 class TeamSerializer(serializers.ModelSerializer):
     members = TeamMemberSerializer(
