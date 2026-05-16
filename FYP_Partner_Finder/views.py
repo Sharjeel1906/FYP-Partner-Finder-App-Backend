@@ -176,7 +176,7 @@ def send_invitation_email(request):
 @extend_schema(
     responses=ConversationSerializer(many=True)
 )
-@api_view(["POST"])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_all_conversations(request):
     user = request.user
@@ -195,10 +195,11 @@ def get_all_conversations(request):
         description="List of messages in conversation"
     )
 )
-@api_view(["POST"])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_conversation_messages(request, user_id):
     current_user = request.user
+
     if current_user.id == user_id:
         return Response(
             {"error": "Cannot start conversation with yourself"},
@@ -212,17 +213,28 @@ def get_conversation_messages(request, user_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    user1, user2 = sorted([current_user, other_user], key=lambda u: u.id)
-    conversation, _ = Conversation.objects.get_or_create(user1=user1, user2=user2)
-    Message.objects.filter(conversation=conversation, receiver=current_user, is_read=False).update(is_read=True)
-    messages = Message.objects.filter(conversation=conversation).order_by("timestamp")
+    conversation, _ = Conversation.objects.get_or_create(
+        user1=min(current_user, other_user, key=lambda u: u.id),
+        user2=max(current_user, other_user, key=lambda u: u.id),
+    )
+
+    Message.objects.filter(
+        conversation=conversation,
+        receiver=current_user,
+        is_read=False
+    ).update(is_read=True)
+
+    # ✅ fetch messages
+    messages = Message.objects.filter(
+        conversation=conversation
+    ).order_by("timestamp")
+
     serializer = MessageListSerializer(messages, many=True)
+
     return Response({
         "conversation_id": conversation.id,
         "messages": serializer.data
     }, status=status.HTTP_200_OK)
-
-
 # ------------------ Teams------------------ #
 @extend_schema(
     responses={

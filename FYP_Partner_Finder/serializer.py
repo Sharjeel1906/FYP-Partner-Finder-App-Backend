@@ -194,8 +194,6 @@ class ConversationSerializer(serializers.ModelSerializer):
 
         # -------------------Teams Serializer ------------------#
 
-# ------------------Team-----------------------#
-
 
 class UserMiniSerializer(serializers.ModelSerializer):
     class Meta:
