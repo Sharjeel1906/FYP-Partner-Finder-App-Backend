@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import get_all_users_details, get_specific_user_details, update_user, create_user, send_invitation_email, \
     get_all_conversations, get_conversation_messages, create_team, add_member, get_team_details, get_all_teams, \
-    EmailLoginView
+    EmailLoginView, get_current_user_details, get_my_team
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -15,12 +15,14 @@ urlpatterns = [
     path("refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("users/", get_all_users_details, name="all-users"),
     path("users/<int:user_id>/", get_specific_user_details, name="user-detail"),
+    path("current_user_detail/", get_current_user_details, name="current_user-detail"),
     path("update-user/", update_user, name="update-user"),
     path("create-user/", create_user, name="create-user"),
     path("send_email/", send_invitation_email, name="send-invitation-email"),
     path('inbox/', get_all_conversations, name='get-all-conversations'),
     path('messages/<int:user_id>/', get_conversation_messages, name='get-conversation-messages'),
     path("teams/", get_all_teams),
+    path("my_team/", get_my_team),
     path("create_team/", create_team),
     path("add_team_member/", add_member),
     path("team/<int:team_id>/", get_team_details),

@@ -53,6 +53,24 @@ def get_specific_user_details(request, user_id):
     serializer = UserDetailSerializer(user)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@extend_schema(
+    responses=UserDetailSerializer
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_current_user_details(request):
+    try:
+        current_id = request.user.id
+        user = User.objects.get(id=current_id)
+    except User.DoesNotExist:
+        return Response(
+            {"error": "User does not exist"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = UserDetailSerializer(user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @extend_schema(
     request=AppUserSerializer,
@@ -86,20 +104,21 @@ def create_user(request):
 def update_user(request):
     try:
         user = request.user
-        data = request.data.copy()
+        data = request.data
+
         try:
             profile = UserProfile.objects.get(user=user)
-            # UPDATE EXISTING PROFILE
             serializer = UserProfileSerializer(
                 profile,
                 data=data,
                 partial=True
             )
         except UserProfile.DoesNotExist:
-            # CREATE NEW PROFILE FROM FORM DATA
             serializer = UserProfileSerializer(data=data)
+
         if serializer.is_valid():
             serializer.save(user=user)
+
             skills = request.data.getlist("skills")
             if skills:
                 Skill.objects.filter(user=user).delete()
@@ -109,7 +128,9 @@ def update_user(request):
                 ])
 
             return Response(UserDetailSerializer(user).data)
+
         return Response(serializer.errors, status=400)
+
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
@@ -269,6 +290,16 @@ def create_team(request):
             },
             status=403
         )
+    existing_member = TeamMember.objects.filter(user=request.user).first()
+    if existing_member:
+        return Response(
+            {
+                "message": "You already have a team and cannot create another one",
+                "team_id": existing_member.team.id
+            },
+            status=400
+        )
+
     team = Team.objects.create(
         team_name=request.data.get("team_name"),
         project_domain=request.data.get("project_domain"),
@@ -302,9 +333,13 @@ def add_member(request):
     try:
         user_to_be_mem = User.objects.get(id=request.data.get("mem_id"))
         team = Team.objects.get(id=request.data.get("team_id"))
-
+        if TeamMember.objects.filter(user=user_to_be_mem).exists():
+            return Response(
+                {"message": "User already belongs to a team"},
+                status=400
+            )
         if TeamMember.objects.filter(user=user_to_be_mem, team=team).exists():
-            return Response({"message": "You are already in the team already in team"}, status=400)
+            return Response({"message": "You are already in the team"}, status=400)
 
         if TeamMember.objects.filter(team=team).count() >= team.team_size:
             return Response({"message": "Team is full"}, status=400)
@@ -363,3 +398,55 @@ def get_team_details(request, team_id):
 
     except Team.DoesNotExist:
         return Response({"error": "Team not found"}, status=404)
+
+@extend_schema(
+    responses={
+        200: OpenApiResponse(description="User team fetched successfully"),
+        404: OpenApiResponse(description="User is not in any team"),
+    },
+    description="Get current logged-in user's team"
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_my_team(request):
+    try:
+        membership = (
+            TeamMember.objects
+            .select_related("team")
+            .filter(user=request.user)
+            .order_by("-id")
+            .first()
+        )
+
+        if not membership:
+            return Response(
+                {"message": "You are not part of any team"},
+                status=404
+            )
+        team = membership.team
+        members = TeamMember.objects.filter(team=team)
+
+        return Response({
+            "id": team.id,
+            "team_name": team.team_name,
+            "project_domain": team.project_domain,
+            "req_role": team.req_role,
+            "available_team_size": team.available_team_size,
+            "group_lead": team.group_lead,
+            "created_at": team.created_at,
+            "my_role": membership.mem_role,
+            "members": [
+                {
+                    "id": m.id,
+                    "user_id": m.user.id,
+                    "username": m.user.username,
+                    "email": m.user.email,
+                    "mem_role": m.mem_role,
+                    "joined_at": m.joined_at,
+                }
+                for m in members
+            ]
+        }, status=200)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)

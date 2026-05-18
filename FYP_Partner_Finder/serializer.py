@@ -73,7 +73,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = [
             "id", "user", "gender", "role", "about",
             "section", "class_name", "program",
-            "semester", "domain", "passing_year",
+            "semester", "domain",
             "pfp_path", "cv_path",
             "linked_in_link", "github_link", "portfolio_link",
             "skills"
@@ -125,7 +125,6 @@ class UserProfileNestedSerializer(serializers.ModelSerializer):
             "program",
             "semester",
             "domain",
-            "passing_year",
             "pfp_path",
             "cv_path",
             "linked_in_link",

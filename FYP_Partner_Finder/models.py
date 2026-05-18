@@ -34,10 +34,9 @@ class UserProfile(models.Model):
     class_name = models.CharField(max_length=100)
     program = models.CharField(max_length=100)
 
-    semester = models.PositiveSmallIntegerField()
+    semester = models.CharField()
     domain = models.CharField(max_length=100)
     experience = models.CharField(max_length=100)
-    passing_year = models.PositiveSmallIntegerField()
 
     pfp_path = models.FileField(upload_to="profile_images/", blank=True)
     cv_path = models.FileField(upload_to="cvs/", blank=True)
