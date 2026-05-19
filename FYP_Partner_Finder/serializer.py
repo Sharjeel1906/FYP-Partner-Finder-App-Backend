@@ -221,22 +221,24 @@ class TeamSerializer(serializers.ModelSerializer):
         many=True,
         read_only=True
     )
-
     roles = TeamRoleSerializer(
         many=True,
         read_only=True
     )
-
+    group_lead_name = serializers.CharField(source="group_lead.username", read_only=True)
+    group_lead_email = serializers.CharField(source="group_lead.email", read_only=True)
     class Meta:
         model = Team
-
         fields = [
             "id",
             "team_name",
+            "team_description",
             "project_domain",
             "available_team_size",
             "created_at",
             "members",
             "group_lead",
+            "group_lead_name",
+            "group_lead_email",
             "roles",
         ]

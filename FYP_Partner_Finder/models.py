@@ -4,11 +4,11 @@ from django.contrib.auth.models import User
 
 class Team(models.Model):
     team_name = models.CharField(max_length=100)
+    team_description = models.TextField(default="")
     project_domain = models.CharField(max_length=100)
     available_team_size = models.PositiveSmallIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
-    group_lead = models.CharField(max_length=100)
-
+    group_lead = models.ForeignKey(User, on_delete=models.CASCADE)
     def __str__(self):
         return self.team_name
 

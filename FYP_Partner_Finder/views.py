@@ -154,25 +154,22 @@ def send_invitation_email(request):
         )
     user = request.user
     sender_name = user.username or user.email or "A user"
-    subject = "Invitation from FYP Partner Finder App"
-    body = f"""
-    Hello {recipient_name},
-    
-    I hope this message finds you well.
-    
-    My name is {sender_name}, and I am currently looking for talented and enthusiastic team members to collaborate on a Final Year Project (FYP). 
-    I came across your profile and believe your skills would be a great addition to my team.
-    
-    You are officially invited to join my team for building an innovative project using the FYP Partner Finder App. 
-    This project aims to create a meaningful impact while providing an excellent opportunity to enhance your technical and collaborative skills.
-    
-    If you are interested in joining, please reply to this email, and we can discuss the project details further.
-    
-    Looking forward to collaborating with you!
-    
+    subject = "Request to Join FYP Team from(FYP Partner Finder App)"
+    body = f"""Hello {recipient_name},
+
+    I hope you are doing well.
+
+    My name is {sender_name}, and I recently came across your team profile on the FYP Partner Finder App. I am very interested in your project and would like to request an opportunity to join your team.
+
+    I believe my skills, enthusiasm, and dedication would allow me to contribute positively to your project and collaborate effectively with the team. I am eager to learn, work on innovative ideas, and gain valuable experience throughout the FYP journey.
+
+    If you are open to adding new members to your team, I would be grateful for the opportunity to discuss further details with you.
+
+    Looking forward to your response.
+
     Best regards,
     {sender_name}
-"""
+    """
     try:
         send_mail(
             subject,
@@ -317,9 +314,10 @@ def create_team(request):
 
     team = Team.objects.create(
         team_name=request.data.get("team_name"),
+        team_description=request.data.get("team_description"),
         project_domain=request.data.get("project_domain"),
         available_team_size=request.data.get("team_size"),
-        group_lead=request.user.username,
+        group_lead=request.user,
     )
     roles = request.data.get("req_role", [])
     if roles:
@@ -398,6 +396,7 @@ def get_team_details(request, team_id):
         data = {
             "id": team.id,
             "team_name": team.team_name,
+            "team_description":team.team_description,
             "project_domain": team.project_domain,
             "roles": [
                 {
@@ -415,10 +414,19 @@ def get_team_details(request, team_id):
                     "username": m.user.username,
                     "email": m.user.email,
                     "mem_role": m.mem_role,
-                    "joined_at": m.joined_at
+                    "joined_at": m.joined_at,
+                    "domain": (
+                        UserProfile.objects.filter(user=m.user)
+                        .first()
+                        .domain
+                        if UserProfile.objects.filter(user=m.user).exists()
+                        else ""
+                    )
                 }
                 for m in members
-            ]
+            ],
+            "group_lead_name": team.group_lead.username,
+            "group_lead_email": team.group_lead.email,
         }
         return Response(data)
 
@@ -455,6 +463,7 @@ def get_my_team(request):
         return Response({
             "id": team.id,
             "team_name": team.team_name,
+            "team_description": team.team_description,
             "project_domain": team.project_domain,
             "roles": [
                 {
@@ -464,7 +473,7 @@ def get_my_team(request):
                 for r in team.roles.all()
             ],
             "available_team_size": team.available_team_size - members.count(),
-            "group_lead": team.group_lead,
+            "group_lead": team.group_lead.username,
             "created_at": team.created_at,
             "my_role": membership.mem_role,
             "members": [
@@ -477,7 +486,9 @@ def get_my_team(request):
                     "joined_at": m.joined_at,
                 }
                 for m in members
-            ]
+            ],
+            "leader_name": team.group_lead.username,
+            "leader_email": team.group_lead.email,
         }, status=200)
 
     except Exception as e:
