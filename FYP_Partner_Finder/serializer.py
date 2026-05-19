@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserProfile, Skill, Message, Conversation, TeamMember, Team
+from .models import UserProfile, Skill, Message, Conversation, TeamMember, Team, TeamRole
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
@@ -208,22 +208,35 @@ class TeamMemberSerializer(serializers.ModelSerializer):
         fields = ["id", "user", "mem_role", "joined_at"]
 
 
+class TeamRoleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TeamRole
+        fields = ["id", "name"]
+
 class TeamSerializer(serializers.ModelSerializer):
+
     members = TeamMemberSerializer(
         source="team_member_set",
         many=True,
         read_only=True
     )
 
+    roles = TeamRoleSerializer(
+        many=True,
+        read_only=True
+    )
+
     class Meta:
         model = Team
+
         fields = [
             "id",
             "team_name",
             "project_domain",
-            "req_role",
             "available_team_size",
             "created_at",
             "members",
             "group_lead",
+            "roles",
         ]

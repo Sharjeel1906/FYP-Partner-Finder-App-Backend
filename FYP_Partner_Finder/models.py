@@ -5,7 +5,6 @@ from django.contrib.auth.models import User
 class Team(models.Model):
     team_name = models.CharField(max_length=100)
     project_domain = models.CharField(max_length=100)
-    req_role = models.CharField(max_length=100)
     available_team_size = models.PositiveSmallIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     group_lead = models.CharField(max_length=100)
@@ -13,7 +12,17 @@ class Team(models.Model):
     def __str__(self):
         return self.team_name
 
+class TeamRole(models.Model):
+    team = models.ForeignKey(
+        Team,
+        on_delete=models.CASCADE,
+        related_name="roles"
+    )
 
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
 class TeamMember(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)

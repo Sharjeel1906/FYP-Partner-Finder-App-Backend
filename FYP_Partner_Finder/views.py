@@ -16,7 +16,7 @@ from .serializer import (
     TeamSerializer,
     EmailTokenObtainPairSerializer
 )
-from .models import UserProfile, Conversation, Message, Skill, Team, TeamMember
+from .models import UserProfile, Conversation, Message, Skill, Team, TeamMember, TeamRole
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 
@@ -267,9 +267,24 @@ def get_conversation_messages(request, user_id):
 @permission_classes([AllowAny])
 def get_all_teams(request):
     teams = Team.objects.all()
+    total_teams = teams.count()
+    total_open_spots = 0
+    teams_with_open_spots = 0
+    for team in teams:
+        members_count = TeamMember.objects.filter(team=team).count()
+        open_spots = team.available_team_size - members_count
+        if open_spots > 0:
+            teams_with_open_spots += 1
+            total_open_spots += open_spots
     serializer = TeamSerializer(teams, many=True)
-    return Response(serializer.data)
-
+    return Response({
+        "summary": {
+            "total_teams": total_teams,
+            "teams_with_open_spots": teams_with_open_spots,
+            "total_open_spots": total_open_spots
+        },
+        "teams": serializer.data
+    })
 
 @extend_schema(
     request=TeamSerializer,
@@ -303,10 +318,15 @@ def create_team(request):
     team = Team.objects.create(
         team_name=request.data.get("team_name"),
         project_domain=request.data.get("project_domain"),
-        req_role=request.data.get("req_role"),
         available_team_size=request.data.get("team_size"),
         group_lead=request.user.username,
     )
+    roles = request.data.get("req_role", [])
+    if roles:
+        TeamRole.objects.bulk_create([
+            TeamRole(team=team, name=r)
+            for r in roles
+        ])
     TeamMember.objects.create(
         user=request.user,
         team=team,
@@ -341,7 +361,7 @@ def add_member(request):
         if TeamMember.objects.filter(user=user_to_be_mem, team=team).exists():
             return Response({"message": "You are already in the team"}, status=400)
 
-        if TeamMember.objects.filter(team=team).count() >= team.team_size:
+        if TeamMember.objects.filter(team=team).count() >= team.available_team_size:
             return Response({"message": "Team is full"}, status=400)
 
         member = TeamMember.objects.create(
@@ -379,8 +399,14 @@ def get_team_details(request, team_id):
             "id": team.id,
             "team_name": team.team_name,
             "project_domain": team.project_domain,
-            "req_role": team.req_role,
-            "available_team_size": team.team_size,
+            "roles": [
+                {
+                    "id": r.id,
+                    "name": r.name
+                }
+                for r in team.roles.all()
+            ],
+            "available_team_size": team.available_team_size-members.count(),
             "created_at": team.created_at,
             "members": [
                 {
@@ -430,8 +456,14 @@ def get_my_team(request):
             "id": team.id,
             "team_name": team.team_name,
             "project_domain": team.project_domain,
-            "req_role": team.req_role,
-            "available_team_size": team.available_team_size,
+            "roles": [
+                {
+                    "id": r.id,
+                    "name": r.name
+                }
+                for r in team.roles.all()
+            ],
+            "available_team_size": team.available_team_size - members.count(),
             "group_lead": team.group_lead,
             "created_at": team.created_at,
             "my_role": membership.mem_role,
