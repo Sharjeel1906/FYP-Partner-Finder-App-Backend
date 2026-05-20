@@ -143,62 +143,36 @@ class UserDetailSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "email", "profile", "skills"]
 
 
-# ------------------Messenger-----------------------#
-class MessageSerializer(serializers.ModelSerializer):
-    sender = AppUserSerializer(read_only=True)
-    receiver = AppUserSerializer(read_only=True)  # NEW
 
-    class Meta:
-        model = Message
-        fields = [
-            "id",
-            "conversation",
-            "sender",
-            "receiver",  # NEW
-            "content",
-            "timestamp",
-            "is_read"
-        ]
-
-
-class MessageListSerializer(serializers.ModelSerializer):
-    sender_id = serializers.IntegerField(source="sender.id")
-    receiver_id = serializers.IntegerField(source="receiver.id")
-
-    class Meta:
-        model = Message
-        fields = [
-            "id",
-            "sender_id",
-            "receiver_id",
-            "content",
-            "timestamp",
-            "is_read",
-        ]
-
-
-class ConversationSerializer(serializers.ModelSerializer):
-    user1 = AppUserSerializer(read_only=True)
-    user2 = AppUserSerializer(read_only=True)
-
-    class Meta:
-        unique_together = ("user1", "user2")
-        model = Conversation
-        fields = [
-            "id",
-            "user1",
-            "user2",
-            "created_at",
-        ]
 
         # -------------------Teams Serializer ------------------#
 
 
 class UserMiniSerializer(serializers.ModelSerializer):
+    profile_image = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ["id", "username", "email"]
+        fields = ["id", "username", "email", "profile_image"]
 
+    def get_profile_image(self, obj):
+        try:
+            request = self.context.get("request")
+            profile = UserProfile.objects.get(user=obj)
+
+            if profile.pfp_path and hasattr(profile.pfp_path, "url"):
+                url = profile.pfp_path.url
+
+                # FIX: force full backend URL even if request missing
+                if request:
+                    return request.build_absolute_uri(url)
+
+                return f"http://192.168.100.11:8000{url}"
+
+        except:
+            return ""
+
+        return ""
 
 class TeamMemberSerializer(serializers.ModelSerializer):
     user = UserMiniSerializer(read_only=True)
@@ -241,4 +215,49 @@ class TeamSerializer(serializers.ModelSerializer):
             "group_lead_name",
             "group_lead_email",
             "roles",
+        ]
+# ------------------Messenger-----------------------#
+class MessageSerializer(serializers.ModelSerializer):
+    sender = UserMiniSerializer(read_only=True)
+    receiver = UserMiniSerializer(read_only=True)
+
+    class Meta:
+        model = Message
+        fields = [
+            "id",
+            "conversation",
+            "sender",
+            "receiver",
+            "content",
+            "timestamp",
+            "is_read"
+        ]
+
+
+class MessageListSerializer(serializers.ModelSerializer):
+    sender = UserMiniSerializer(read_only=True)
+    receiver = UserMiniSerializer(read_only=True)
+
+    class Meta:
+        model = Message
+        fields = [
+            "id",
+            "sender",
+            "receiver",
+            "content",
+            "timestamp",
+            "is_read",
+        ]
+
+class ConversationSerializer(serializers.ModelSerializer):
+    user1 = UserMiniSerializer(read_only=True)
+    user2 = UserMiniSerializer(read_only=True)
+
+    class Meta:
+        model = Conversation
+        fields = [
+            "id",
+            "user1",
+            "user2",
+            "created_at",
         ]

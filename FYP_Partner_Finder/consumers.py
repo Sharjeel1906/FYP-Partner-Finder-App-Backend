@@ -10,14 +10,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.sender_id = int(self.scope["url_route"]["kwargs"]["sender_id"])
         self.receiver_id = int(self.scope["url_route"]["kwargs"]["receiver_id"])
-
         self.room_name = f"chat_{min(self.sender_id, self.receiver_id)}_{max(self.sender_id, self.receiver_id)}"
 
         await self.channel_layer.group_add(
             self.room_name,
             self.channel_name
         )
-
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -64,10 +62,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         if not conversation:
             conversation = Conversation.objects.create(
-                user1=sender,
-                user2=receiver
+                user1=min(sender, receiver, key=lambda u: u.id),
+                user2=max(sender, receiver, key=lambda u: u.id)
             )
-
         return Message.objects.create(
             conversation=conversation,
             sender=sender,

@@ -223,6 +223,7 @@ def get_conversation_messages(request, user_id):
             {"error": "Cannot start conversation with yourself"},
             status=status.HTTP_400_BAD_REQUEST
         )
+
     try:
         other_user = User.objects.get(id=user_id)
     except User.DoesNotExist:
@@ -231,18 +232,27 @@ def get_conversation_messages(request, user_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    conversation, _ = Conversation.objects.get_or_create(
+    # ❌ FIX: DO NOT create conversation in GET API
+    conversation = Conversation.objects.filter(
         user1=min(current_user, other_user, key=lambda u: u.id),
         user2=max(current_user, other_user, key=lambda u: u.id),
-    )
+    ).first()
 
+    # If no conversation exists → return empty chat (DO NOT CREATE)
+    if not conversation:
+        return Response({
+            "conversation_id": None,
+            "messages": []
+        }, status=status.HTTP_200_OK)
+
+    # mark messages as read
     Message.objects.filter(
         conversation=conversation,
         receiver=current_user,
         is_read=False
     ).update(is_read=True)
 
-    # ✅ fetch messages
+    # fetch messages
     messages = Message.objects.filter(
         conversation=conversation
     ).order_by("timestamp")
