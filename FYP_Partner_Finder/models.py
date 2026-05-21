@@ -53,6 +53,7 @@ class UserProfile(models.Model):
     linked_in_link = models.URLField(blank=True)
     github_link = models.URLField(blank=True)
     portfolio_link = models.URLField(blank=True)
+    is_online = models.BooleanField(default=False)
 
 
 class Skill(models.Model):

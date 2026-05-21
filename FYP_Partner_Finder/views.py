@@ -16,6 +16,7 @@ from .serializer import (
     TeamSerializer,
     EmailTokenObtainPairSerializer
 )
+from django.db.models import Count, Max, Prefetch
 from .models import UserProfile, Conversation, Message, Skill, Team, TeamMember, TeamRole
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -198,12 +199,27 @@ def send_invitation_email(request):
 @permission_classes([IsAuthenticated])
 def get_all_conversations(request):
     user = request.user
+    latest_messages = Prefetch(
+        "messages",
+        queryset=Message.objects.order_by("-timestamp")[:1],
+        to_attr="latest_message_list",
+    )
     conversations = (
-            Conversation.objects.filter(user1=user) |
-            Conversation.objects.filter(user2=user)
-    ).order_by("created_at")
+        Conversation.objects.filter(user1=user)
+        | Conversation.objects.filter(user2=user)
+    ).select_related(
+        "user1", "user2", "user1__userprofile", "user2__userprofile"
+    ).prefetch_related(
+        latest_messages
+    ).annotate(
+        last_msg_time=Max("messages__timestamp")
+    ).order_by("-last_msg_time", "-created_at")
 
-    serializer = ConversationSerializer(conversations, many=True)
+    serializer = ConversationSerializer(
+        conversations,
+        many=True,
+        context={"request": request},
+    )
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -257,7 +273,11 @@ def get_conversation_messages(request, user_id):
         conversation=conversation
     ).order_by("timestamp")
 
-    serializer = MessageListSerializer(messages, many=True)
+    serializer = MessageListSerializer(
+        messages,
+        many=True,
+        context={"request": request},
+    )
 
     return Response({
         "conversation_id": conversation.id,
@@ -494,6 +514,13 @@ def get_my_team(request):
                     "email": m.user.email,
                     "mem_role": m.mem_role,
                     "joined_at": m.joined_at,
+                    "domain": (
+                        UserProfile.objects.filter(user=m.user)
+                        .first()
+                        .domain
+                        if UserProfile.objects.filter(user=m.user).exists()
+                        else ""
+                    )
                 }
                 for m in members
             ],

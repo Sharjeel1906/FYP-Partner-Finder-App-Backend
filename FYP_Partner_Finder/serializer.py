@@ -231,12 +231,14 @@ class MessageSerializer(serializers.ModelSerializer):
             "content",
             "timestamp",
             "is_read"
+            "is_Me"
         ]
 
 
 class MessageListSerializer(serializers.ModelSerializer):
     sender = UserMiniSerializer(read_only=True)
     receiver = UserMiniSerializer(read_only=True)
+    sender_id = serializers.IntegerField(source="sender.id", read_only=True)
 
     class Meta:
         model = Message
@@ -244,6 +246,7 @@ class MessageListSerializer(serializers.ModelSerializer):
             "id",
             "sender",
             "receiver",
+            "sender_id",
             "content",
             "timestamp",
             "is_read",
@@ -252,6 +255,10 @@ class MessageListSerializer(serializers.ModelSerializer):
 class ConversationSerializer(serializers.ModelSerializer):
     user1 = UserMiniSerializer(read_only=True)
     user2 = UserMiniSerializer(read_only=True)
+    other_user = serializers.SerializerMethodField()
+    last_message = serializers.SerializerMethodField()
+    last_message_text = serializers.SerializerMethodField()
+    last_message_time = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
@@ -259,5 +266,44 @@ class ConversationSerializer(serializers.ModelSerializer):
             "id",
             "user1",
             "user2",
+            "other_user",
+            "last_message",
+            "last_message_text",
+            "last_message_time",
             "created_at",
         ]
+
+    def _get_latest_message(self, obj):
+        latest = getattr(obj, "latest_message_list", None)
+        if latest:
+            return latest[0]
+        return obj.messages.order_by("-timestamp").first()
+
+    def _get_other_user_instance(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return obj.user2
+        if obj.user1_id == request.user.id:
+            return obj.user2
+        return obj.user1
+
+    def get_other_user(self, obj):
+        other = self._get_other_user_instance(obj)
+        return UserMiniSerializer(other, context=self.context).data
+
+    def get_last_message(self, obj):
+        message = self._get_latest_message(obj)
+        if not message:
+            return None
+        return {
+            "content": message.content,
+            "timestamp": message.timestamp,
+        }
+
+    def get_last_message_text(self, obj):
+        message = self._get_latest_message(obj)
+        return message.content if message else ""
+
+    def get_last_message_time(self, obj):
+        message = self._get_latest_message(obj)
+        return message.timestamp if message else None

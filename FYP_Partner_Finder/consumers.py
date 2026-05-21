@@ -4,6 +4,7 @@ from asgiref.sync import sync_to_async
 from django.contrib.auth.models import User
 from .models import Conversation, Message
 from .serializer import MessageListSerializer
+from .presence import mark_user_connected, mark_user_disconnected
 
 class ChatConsumer(AsyncWebsocketConsumer):
 
@@ -16,6 +17,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.room_name,
             self.channel_name
         )
+        await self.set_presence(self.sender_id, connected=True)
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -23,6 +25,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.room_name,
             self.channel_name
         )
+        await self.set_presence(self.sender_id, connected=False)
+
+    @sync_to_async
+    def set_presence(self, user_id, connected):
+        if connected:
+            mark_user_connected(user_id)
+        else:
+            mark_user_disconnected(user_id)
 
     async def receive(self, text_data):
         try:
@@ -39,11 +49,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
             content
         )
 
+        @sync_to_async
+        def serialize_message(message):
+            return MessageListSerializer(message).data
+
+        serialized_message = await serialize_message(message)
+
         await self.channel_layer.group_send(
             self.room_name,
             {
                 "type": "chat_message",
-                "message": MessageListSerializer(message).data
+                "message": serialized_message
             }
         )
 
