@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import get_all_users_details, get_specific_user_details, update_user, create_user, send_invitation_email, \
     get_all_conversations, get_conversation_messages, create_team, add_member, get_team_details, get_all_teams, \
-    EmailLoginView, get_current_user_details, get_my_team
+    EmailLoginView, get_current_user_details, get_my_team, delete_message, delete_conversation, remove_team_member, \
+    request_exit_team, delete_team
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -25,5 +26,29 @@ urlpatterns = [
     path("my_team/", get_my_team),
     path("create_team/", create_team),
     path("add_team_member/", add_member),
+    path("team/delete/<int:team_id>/", delete_team, name="delete_team"),
     path("team/<int:team_id>/", get_team_details),
+    path(
+        "message/<int:message_id>/",
+        delete_message,
+        name="delete_message"
+    ),
+
+    path(
+        "conversation/<int:conversation_id>/",
+        delete_conversation,
+        name="delete_conversation"
+    ),
+
+    path(
+        "remove_team_member/",
+        remove_team_member,
+        name="remove_team_member"
+    ),
+
+    path(
+        "request_exit_team/",
+        request_exit_team,
+        name="request_exit_team"
+    ),
 ]

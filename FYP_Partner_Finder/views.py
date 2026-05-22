@@ -283,6 +283,73 @@ def get_conversation_messages(request, user_id):
         "conversation_id": conversation.id,
         "messages": serializer.data
     }, status=status.HTTP_200_OK)
+
+# ------------------ Chat Delete APIs ------------------ #
+
+@extend_schema(
+    responses={
+        200: OpenApiResponse(description="Message deleted successfully"),
+        404: OpenApiResponse(description="Message not found"),
+    }
+)
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_message(request, message_id):
+    try:
+        message = Message.objects.get(id=message_id)
+
+        if request.user not in [message.sender, message.receiver]:
+            return Response(
+                {"error": "Permission denied"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        message.delete()
+
+        return Response(
+            {"message": "Message deleted successfully"},
+            status=status.HTTP_200_OK
+        )
+
+    except Message.DoesNotExist:
+        return Response(
+            {"error": "Message not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+
+@extend_schema(
+    responses={
+        200: OpenApiResponse(description="Conversation deleted successfully"),
+        404: OpenApiResponse(description="Conversation not found"),
+    }
+)
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_conversation(request, conversation_id):
+    try:
+        conversation = Conversation.objects.get(id=conversation_id)
+
+        if request.user not in [conversation.user1, conversation.user2]:
+            return Response(
+                {"error": "Permission denied"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        conversation.delete()
+
+        return Response(
+            {"message": "Conversation deleted successfully"},
+            status=status.HTTP_200_OK
+        )
+
+    except Conversation.DoesNotExist:
+        return Response(
+            {"error": "Conversation not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+
 # ------------------ Teams------------------ #
 @extend_schema(
     responses={
@@ -530,3 +597,143 @@ def get_my_team(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+@extend_schema(
+    responses={
+        200: OpenApiResponse(description="Member removed successfully"),
+        400: OpenApiResponse(description="Invalid request"),
+        404: OpenApiResponse(description="Member not found"),
+    }
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def remove_team_member(request):
+    user_id = request.data.get("user_id")
+    team_id = request.data.get("team_id")
+
+    if not user_id or not team_id:
+        return Response(
+            {"error": "user_id and team_id are required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        member = TeamMember.objects.select_related("team").get(
+            user_id=user_id,
+            team_id=team_id
+        )
+
+        if member.team.group_lead != request.user:
+            return Response(
+                {"error": "Only team leader can remove members"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if member.user == request.user:
+            return Response(
+                {"error": "Leader cannot remove himself"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        member.delete()
+        return Response({"message": "Member removed successfully"})
+
+    except TeamMember.DoesNotExist:
+        return Response(
+            {"error": "Member not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+@extend_schema(
+    responses={
+        200: OpenApiResponse(description="Exited team successfully"),
+        400: OpenApiResponse(description="Invalid request"),
+        404: OpenApiResponse(description="Team membership not found"),
+    }
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def request_exit_team(request):
+    try:
+        membership = TeamMember.objects.get(user=request.user)
+
+        if membership.mem_role.lower() == "leader":
+            return Response(
+                {"error": "Team leader cannot request to leave the team"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        leader_email = membership.team.group_lead.email
+        member_name = request.user.username
+
+        subject = "Team Exit Request"
+        body = f"""
+       Hello Team Leader,
+
+       {member_name} has requested to leave the team "{membership.team.team_name}".
+
+       Please review and take the necessary action.
+
+       Regards,
+       FYP Partner Finder
+"""
+        send_mail(
+            subject,
+            body,
+            settings.DEFAULT_FROM_EMAIL,
+            [leader_email],
+            fail_silently=False,
+        )
+        return Response(
+            {"success": "Exit request sent successfully"},
+            status=status.HTTP_200_OK
+        )
+
+    except TeamMember.DoesNotExist:
+        return Response(
+            {"error": "You are not part of any team"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {"error": f"Failed to send request: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@extend_schema(
+    responses={
+        200: OpenApiResponse(description="Team deleted successfully"),
+        403: OpenApiResponse(description="Only team leader can delete the team"),
+        404: OpenApiResponse(description="Team not found"),
+    },
+    description="Delete a team (only by team leader)"
+)
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_team(request, team_id):
+    try:
+        team = Team.objects.get(id=team_id)
+
+        # check permission
+        if team.group_lead != request.user:
+            return Response(
+                {"error": "Only team leader can delete the team"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        TeamMember.objects.filter(team=team).delete()
+        TeamRole.objects.filter(team=team).delete()
+
+        # delete team
+        team.delete()
+
+        return Response(
+            {"message": "Team deleted successfully"},
+            status=status.HTTP_200_OK
+        )
+
+    except Team.DoesNotExist:
+        return Response(
+            {"error": "Team not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
