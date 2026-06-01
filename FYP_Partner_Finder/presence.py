@@ -23,3 +23,8 @@ def mark_user_disconnected(user_id):
         UserProfile.objects.filter(user_id=user_id).update(is_online=False)
     else:
         cache.set(key, count, timeout=86400)
+_ONLINE_KEY = "chat_user_online_{}"
+
+def is_user_online(user_id: int) -> bool:
+    return bool(cache.get(_ONLINE_KEY.format(user_id), False))
+
