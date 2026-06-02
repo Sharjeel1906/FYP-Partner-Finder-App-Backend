@@ -19,7 +19,7 @@ from .serializer import (
 from django.db.models import Count, Max, Prefetch
 from .models import UserProfile, Conversation, Message, Skill, Team, TeamMember, TeamRole
 from rest_framework_simplejwt.views import TokenObtainPairView
-
+from .email_utils import send_email_async
 
 class EmailLoginView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
@@ -172,13 +172,7 @@ def send_invitation_email(request):
     {sender_name}
     """
     try:
-        send_mail(
-            subject,
-            body,
-            settings.DEFAULT_FROM_EMAIL,
-            [recipient_email],
-            fail_silently=False,
-        )
+        send_email_async(subject, body, recipient_email)
         return Response(
             {"success": f"Invitation sent to {recipient_email}"},
             status=status.HTTP_200_OK
@@ -676,13 +670,7 @@ def request_exit_team(request):
        Regards,
        FYP Partner Finder
 """
-        send_mail(
-            subject,
-            body,
-            settings.DEFAULT_FROM_EMAIL,
-            [leader_email],
-            fail_silently=False,
-        )
+        send_email_async(subject, body, leader_email)
         return Response(
             {"success": "Exit request sent successfully"},
             status=status.HTTP_200_OK
