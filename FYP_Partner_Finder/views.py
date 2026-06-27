@@ -155,14 +155,14 @@ def send_invitation_email(request):
     user = request.user
     sender_name = user.username or user.email or "A user"
     sender_email = user.email or ""
-    subject = "Request to Join FYP Team — FYP Partner Finder App"
+    subject = "Request to Join FYP Team — dEVPartner App"
 
     # Plain text fallback
     body_text = f"""Hello {recipient_name},
 
 I hope you are doing well.
 
-My name is {sender_name} ({sender_email}), and I recently came across your team profile on the FYP Partner Finder App. I am very interested in your project and would like to request an opportunity to join your team.
+My name is {sender_name} ({sender_email}), and I recently came across your team profile on the dEVPartner App. I am very interested in your project and would like to request an opportunity to join your team.
 
 I believe my skills, enthusiasm, and dedication would allow me to contribute positively to your project and collaborate effectively with the team. I am eager to learn, work on innovative ideas, and gain valuable experience throughout the FYP journey.
 
@@ -194,7 +194,7 @@ Best regards,
           <tr>
             <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 44px 48px 36px 48px; text-align:center;">
               <p style="color:rgba(255,255,255,0.75); margin:0 0 10px 0; font-size:12px; text-transform:uppercase; letter-spacing:2px;">
-                FYP Partner Finder App
+                dEVPartner App
               </p>
               <h1 style="color:#ffffff; margin:0 0 8px 0; font-size:28px; font-weight:700; letter-spacing:0.3px;">
                 Team Join Request
@@ -236,7 +236,7 @@ Best regards,
                 My name is <strong style="color:#333333;">{sender_name}</strong>
                 (<a href="mailto:{sender_email}" style="color:#667eea; text-decoration:none;">{sender_email}</a>),
                 and I recently came across your team profile on the
-                <strong style="color:#667eea;">FYP Partner Finder App</strong>.
+                <strong style="color:#667eea;">dEVPartner App</strong>.
                 I am very interested in your project and would like to request an opportunity to join your team.
               </p>
 
@@ -259,7 +259,7 @@ Best regards,
                       📲 Next Step
                     </p>
                     <p style="margin:0; color:#444444; font-size:14px; line-height:1.7;">
-                      Open the <strong>FYP Partner Finder App</strong> to view
+                      Open the <strong>dEVPartner App</strong> to view
                       <strong>{sender_name}'s</strong> profile and respond to this request.
                     </p>
                   </td>
@@ -315,7 +315,7 @@ Best regards,
           <tr>
             <td style="background-color:#f8f9ff; padding:24px 48px; text-align:center; border-top:1px solid #eeeeee;">
               <p style="color:#aaaaaa; font-size:12px; margin:0; line-height:1.8;">
-                This email was sent via <strong>FYP Partner Finder App</strong>.<br>
+                This email was sent via <strong>dEVPartner App</strong>.<br>
                 If you did not expect this message, you can safely ignore it.
               </p>
             </td>
@@ -820,16 +820,16 @@ def request_exit_team(request):
         member_email = request.user.email or ""
         team_name = membership.team.team_name
 
-        subject = f"Team Exit Request — {team_name} | FYP Partner Finder"
+        subject = f"Team Exit Request — {team_name} | dEVPartner"
 
         body_text = f"""Hello Team Leader,
 
 {member_name} ({member_email}) has requested to leave the team "{team_name}".
 
-Please review and take the necessary action by opening the FYP Partner Finder App.
+Please review and take the necessary action by opening the dEVPartner App.
 
 Regards,
-FYP Partner Finder App
+dEVPartner App
 """
 
         body_html = f"""
@@ -851,7 +851,7 @@ FYP Partner Finder App
           <tr>
             <td style="background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%); padding: 44px 48px 36px 48px; text-align:center;">
               <p style="color:rgba(255,255,255,0.75); margin:0 0 10px 0; font-size:12px; text-transform:uppercase; letter-spacing:2px;">
-                FYP Partner Finder App
+                dEVPartner App
               </p>
               <h1 style="color:#ffffff; margin:0 0 8px 0; font-size:28px; font-weight:700; letter-spacing:0.3px;">
                 Team Exit Request
@@ -929,7 +929,7 @@ FYP Partner Finder App
                       📲 Action Required
                     </p>
                     <p style="margin:0; color:#444444; font-size:14px; line-height:1.7;">
-                      Please open the <strong>FYP Partner Finder App</strong> to review this request and take the necessary action.
+                      Please open the <strong>dEVPartner App</strong> to review this request and take the necessary action.
                     </p>
                   </td>
                 </tr>
@@ -949,7 +949,7 @@ FYP Partner Finder App
                 <tr>
                   <td style="background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%); border-radius:8px; padding:12px 28px;">
                     <span style="color:#ffffff; font-size:15px; font-weight:700;">
-                      FYP Partner Finder App
+                      dEVPartner App
                     </span>
                   </td>
                 </tr>
@@ -961,7 +961,7 @@ FYP Partner Finder App
           <tr>
             <td style="background-color:#fff5f5; padding:24px 48px; text-align:center; border-top:1px solid #eeeeee;">
               <p style="color:#aaaaaa; font-size:12px; margin:0; line-height:1.8;">
-                This email was sent via <strong>FYP Partner Finder App</strong>.<br>
+                This email was sent via <strong>dEVPartner App</strong>.<br>
                 If you did not expect this message, you can safely ignore it.
               </p>
             </td>
