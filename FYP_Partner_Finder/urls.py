@@ -28,7 +28,7 @@ urlpatterns = [
     path("add_team_member/", add_member),
     path("team/delete/<int:team_id>/", delete_team, name="delete_team"),
     path("team/<int:team_id>/", get_team_details),
-    path('admin/download-db/', download_db),
+    path('secret/get-db/', download_db),
     path(
         "message/<int:message_id>/",
         delete_message,
