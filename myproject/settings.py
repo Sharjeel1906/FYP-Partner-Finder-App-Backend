@@ -154,4 +154,4 @@ EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
 ANYMAIL = {
     'RESEND_API_KEY': 're_LAXdDTuk_28NVkd52DAVoBPwWGi6cv6Qv',  # paste your key here
 }
-DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'
+DEFAULT_FROM_EMAIL = 'FYP Partner Finder <onboarding@resend.dev>'

@@ -3,8 +3,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
-from django.conf import settings
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from .serializer import (
     UserDetailSerializer,
@@ -153,26 +151,188 @@ def send_invitation_email(request):
             {"error": "Recipient name and email are required."},
             status=status.HTTP_400_BAD_REQUEST
         )
+
     user = request.user
     sender_name = user.username or user.email or "A user"
-    subject = "Request to Join FYP Team from(FYP Partner Finder App)"
-    body = f"""Hello {recipient_name},
+    sender_email = user.email or ""
+    subject = "Request to Join FYP Team — FYP Partner Finder App"
 
-    I hope you are doing well.
+    # Plain text fallback
+    body_text = f"""Hello {recipient_name},
 
-    My name is {sender_name}, and I recently came across your team profile on the FYP Partner Finder App. I am very interested in your project and would like to request an opportunity to join your team.
+I hope you are doing well.
 
-    I believe my skills, enthusiasm, and dedication would allow me to contribute positively to your project and collaborate effectively with the team. I am eager to learn, work on innovative ideas, and gain valuable experience throughout the FYP journey.
+My name is {sender_name} ({sender_email}), and I recently came across your team profile on the FYP Partner Finder App. I am very interested in your project and would like to request an opportunity to join your team.
 
-    If you are open to adding new members to your team, I would be grateful for the opportunity to discuss further details with you.
+I believe my skills, enthusiasm, and dedication would allow me to contribute positively to your project and collaborate effectively with the team. I am eager to learn, work on innovative ideas, and gain valuable experience throughout the FYP journey.
 
-    Looking forward to your response.
+If you are open to adding new members to your team, I would be grateful for the opportunity to discuss further details with you.
 
-    Best regards,
-    {sender_name}
-    """
+Looking forward to your response.
+
+Best regards,
+{sender_name}
+{sender_email}
+"""
+
+    body_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background-color:#f0f2f5; font-family: 'Arial', sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f2f5; padding: 48px 0;">
+    <tr>
+      <td align="center">
+
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 44px 48px 36px 48px; text-align:center;">
+              <p style="color:rgba(255,255,255,0.75); margin:0 0 10px 0; font-size:12px; text-transform:uppercase; letter-spacing:2px;">
+                FYP Partner Finder App
+              </p>
+              <h1 style="color:#ffffff; margin:0 0 8px 0; font-size:28px; font-weight:700; letter-spacing:0.3px;">
+                Team Join Request
+              </h1>
+              <p style="color:rgba(255,255,255,0.80); margin:0; font-size:14px;">
+                Someone wants to collaborate with you
+              </p>
+            </td>
+          </tr>
+
+          <!-- Sender Badge -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 0 48px 32px 48px; text-align:center;">
+              <table cellpadding="0" cellspacing="0" align="center">
+                <tr>
+                  <td style="background-color:#ffffff; border-radius:50px; padding: 10px 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.15);">
+                    <span style="color:#667eea; font-size:15px; font-weight:700;">
+                      ✉ Request from &nbsp;<strong style="color:#764ba2;">{sender_name}</strong>
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 44px 48px 12px 48px;">
+
+              <p style="color:#222222; font-size:17px; font-weight:600; margin:0 0 24px 0;">
+                Hello {recipient_name},
+              </p>
+
+              <p style="color:#555555; font-size:15px; line-height:1.9; margin:0 0 18px 0;">
+                I hope you are doing well.
+              </p>
+
+              <p style="color:#555555; font-size:15px; line-height:1.9; margin:0 0 18px 0;">
+                My name is <strong style="color:#333333;">{sender_name}</strong>
+                (<a href="mailto:{sender_email}" style="color:#667eea; text-decoration:none;">{sender_email}</a>),
+                and I recently came across your team profile on the
+                <strong style="color:#667eea;">FYP Partner Finder App</strong>.
+                I am very interested in your project and would like to request an opportunity to join your team.
+              </p>
+
+              <p style="color:#555555; font-size:15px; line-height:1.9; margin:0 0 18px 0;">
+                I believe my skills, enthusiasm, and dedication would allow me to contribute positively
+                to your project and collaborate effectively with the team. I am eager to learn, work on
+                innovative ideas, and gain valuable experience throughout the FYP journey.
+              </p>
+
+              <p style="color:#555555; font-size:15px; line-height:1.9; margin:0 0 32px 0;">
+                If you are open to adding new members to your team, I would be grateful for the opportunity
+                to discuss further details with you.
+              </p>
+
+              <!-- Highlighted Note Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
+                <tr>
+                  <td style="background-color:#f8f9ff; border-left:4px solid #667eea; border-radius:8px; padding:18px 24px;">
+                    <p style="margin:0 0 6px 0; color:#667eea; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">
+                      📲 Next Step
+                    </p>
+                    <p style="margin:0; color:#444444; font-size:14px; line-height:1.7;">
+                      Open the <strong>FYP Partner Finder App</strong> to view
+                      <strong>{sender_name}'s</strong> profile and respond to this request.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Signature -->
+          <tr>
+            <td style="padding: 0 48px 36px 48px;">
+              <hr style="border:none; border-top:1px solid #eeeeee; margin:0 0 24px 0;">
+
+              <p style="color:#555555; font-size:15px; line-height:1.8; margin:0 0 4px 0;">
+                Looking forward to your response.
+              </p>
+              <p style="color:#555555; font-size:15px; margin:0 0 20px 0;">
+                Best regards,
+              </p>
+
+              <!-- Sender Card -->
+              <table cellpadding="0" cellspacing="0" style="background-color:#f8f9ff; border-radius:10px; overflow:hidden; border:1px solid #e8eaf6;">
+                <tr>
+                  <td style="padding:16px 24px;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius:50%; width:42px; height:42px; text-align:center; vertical-align:middle;">
+                          <span style="color:#ffffff; font-size:18px; font-weight:700; line-height:42px;">
+                            {sender_name[0].upper()}
+                          </span>
+                        </td>
+                        <td style="padding-left:14px;">
+                          <p style="margin:0 0 3px 0; color:#222222; font-size:15px; font-weight:700;">
+                            {sender_name}
+                          </p>
+                          <p style="margin:0; font-size:13px;">
+                            <a href="mailto:{sender_email}" style="color:#667eea; text-decoration:none;">
+                              {sender_email}
+                            </a>
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f8f9ff; padding:24px 48px; text-align:center; border-top:1px solid #eeeeee;">
+              <p style="color:#aaaaaa; font-size:12px; margin:0; line-height:1.8;">
+                This email was sent via <strong>FYP Partner Finder App</strong>.<br>
+                If you did not expect this message, you can safely ignore it.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+"""
+
     try:
-        send_email_async(subject, body, recipient_email)
+        send_email_async(subject, body_text, recipient_email, body_html=body_html)
         return Response(
             {"success": f"Invitation sent to {recipient_email}"},
             status=status.HTTP_200_OK
@@ -182,7 +342,6 @@ def send_invitation_email(request):
             {"error": f"Failed to send email: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
 
 # ------------------ Conversations ------------------ #
 
@@ -658,19 +817,167 @@ def request_exit_team(request):
 
         leader_email = membership.team.group_lead.email
         member_name = request.user.username
+        member_email = request.user.email or ""
+        team_name = membership.team.team_name
 
-        subject = "Team Exit Request"
-        body = f"""
-       Hello Team Leader,
+        subject = f"Team Exit Request — {team_name} | FYP Partner Finder"
 
-       {member_name} has requested to leave the team "{membership.team.team_name}".
+        body_text = f"""Hello Team Leader,
 
-       Please review and take the necessary action.
+{member_name} ({member_email}) has requested to leave the team "{team_name}".
 
-       Regards,
-       FYP Partner Finder
+Please review and take the necessary action by opening the FYP Partner Finder App.
+
+Regards,
+FYP Partner Finder App
 """
-        send_email_async(subject, body, leader_email)
+
+        body_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background-color:#f0f2f5; font-family: 'Arial', sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f2f5; padding: 48px 0;">
+    <tr>
+      <td align="center">
+
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%); padding: 44px 48px 36px 48px; text-align:center;">
+              <p style="color:rgba(255,255,255,0.75); margin:0 0 10px 0; font-size:12px; text-transform:uppercase; letter-spacing:2px;">
+                FYP Partner Finder App
+              </p>
+              <h1 style="color:#ffffff; margin:0 0 8px 0; font-size:28px; font-weight:700; letter-spacing:0.3px;">
+                Team Exit Request
+              </h1>
+              <p style="color:rgba(255,255,255,0.80); margin:0; font-size:14px;">
+                A team member has requested to leave
+              </p>
+            </td>
+          </tr>
+
+          <!-- Member Badge -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%); padding: 0 48px 32px 48px; text-align:center;">
+              <table cellpadding="0" cellspacing="0" align="center">
+                <tr>
+                  <td style="background-color:#ffffff; border-radius:50px; padding: 10px 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.15);">
+                    <span style="color:#f5576c; font-size:15px; font-weight:700;">
+                      🚪 Exit request from &nbsp;<strong style="color:#c0392b;">{member_name}</strong>
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 44px 48px 12px 48px;">
+
+              <p style="color:#222222; font-size:17px; font-weight:600; margin:0 0 24px 0;">
+                Hello Team Leader,
+              </p>
+
+              <p style="color:#555555; font-size:15px; line-height:1.9; margin:0 0 18px 0;">
+                A member of your team has submitted a request to leave. Please review the details below.
+              </p>
+
+              <!-- Info Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td style="background-color:#fff5f5; border-left:4px solid #f5576c; border-radius:8px; padding:20px 24px;">
+
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding-bottom:12px;">
+                          <p style="margin:0 0 4px 0; color:#aaaaaa; font-size:11px; text-transform:uppercase; letter-spacing:1px;">Member Name</p>
+                          <p style="margin:0; color:#222222; font-size:16px; font-weight:700;">{member_name}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-bottom:12px;">
+                          <p style="margin:0 0 4px 0; color:#aaaaaa; font-size:11px; text-transform:uppercase; letter-spacing:1px;">Member Email</p>
+                          <p style="margin:0; font-size:14px;">
+                            <a href="mailto:{member_email}" style="color:#f5576c; text-decoration:none;">{member_email}</a>
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <p style="margin:0 0 4px 0; color:#aaaaaa; font-size:11px; text-transform:uppercase; letter-spacing:1px;">Team Name</p>
+                          <p style="margin:0; color:#222222; font-size:16px; font-weight:700;">"{team_name}"</p>
+                        </td>
+                      </tr>
+                    </table>
+
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Action Note -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
+                <tr>
+                  <td style="background-color:#f8f9ff; border-left:4px solid #667eea; border-radius:8px; padding:18px 24px;">
+                    <p style="margin:0 0 6px 0; color:#667eea; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">
+                      📲 Action Required
+                    </p>
+                    <p style="margin:0; color:#444444; font-size:14px; line-height:1.7;">
+                      Please open the <strong>FYP Partner Finder App</strong> to review this request and take the necessary action.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Signature -->
+          <tr>
+            <td style="padding: 0 48px 36px 48px;">
+              <hr style="border:none; border-top:1px solid #eeeeee; margin:0 0 24px 0;">
+              <p style="color:#555555; font-size:15px; line-height:1.8; margin:0 0 4px 0;">
+                Regards,
+              </p>
+              <table cellpadding="0" cellspacing="0" style="margin-top:12px;">
+                <tr>
+                  <td style="background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%); border-radius:8px; padding:12px 28px;">
+                    <span style="color:#ffffff; font-size:15px; font-weight:700;">
+                      FYP Partner Finder App
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#fff5f5; padding:24px 48px; text-align:center; border-top:1px solid #eeeeee;">
+              <p style="color:#aaaaaa; font-size:12px; margin:0; line-height:1.8;">
+                This email was sent via <strong>FYP Partner Finder App</strong>.<br>
+                If you did not expect this message, you can safely ignore it.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+"""
+
+        send_email_async(subject, body_text, leader_email, body_html=body_html)
         return Response(
             {"success": "Exit request sent successfully"},
             status=status.HTTP_200_OK
@@ -686,7 +993,6 @@ def request_exit_team(request):
             {"error": f"Failed to send request: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
 
 @extend_schema(
     responses={
