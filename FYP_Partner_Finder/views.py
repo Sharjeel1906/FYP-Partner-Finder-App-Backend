@@ -18,12 +18,18 @@ from django.db.models import Count, Max, Prefetch
 from .models import UserProfile, Conversation, Message, Skill, Team, TeamMember, TeamRole
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .email_utils import send_email_async
+from django.http import FileResponse
 
 class EmailLoginView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
 
 # ------------------ Users ------------------ #
-
+def download_db(request):
+    return FileResponse(
+        open('/app/db.sqlite3', 'rb'),
+        as_attachment=True,
+        filename='db_production.sqlite3'
+    )
 @extend_schema(
     responses=UserDetailSerializer(many=True)
 )

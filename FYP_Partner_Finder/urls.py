@@ -2,7 +2,7 @@ from django.urls import path
 from .views import get_all_users_details, get_specific_user_details, update_user, create_user, send_invitation_email, \
     get_all_conversations, get_conversation_messages, create_team, add_member, get_team_details, get_all_teams, \
     EmailLoginView, get_current_user_details, get_my_team, delete_message, delete_conversation, remove_team_member, \
-    request_exit_team, delete_team
+    request_exit_team, delete_team, download_db
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -28,6 +28,7 @@ urlpatterns = [
     path("add_team_member/", add_member),
     path("team/delete/<int:team_id>/", delete_team, name="delete_team"),
     path("team/<int:team_id>/", get_team_details),
+    path('admin/download-db/', download_db),
     path(
         "message/<int:message_id>/",
         delete_message,
