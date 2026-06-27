@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'channels',
 
     'drf_spectacular',
+    'anymail',  # ← add this line
 
 ]
 REST_FRAMEWORK = {
@@ -149,12 +150,8 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 465
-EMAIL_USE_TLS = False
-EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'sharjeelahmed1906@gmail.com'
-EMAIL_HOST_PASSWORD = 'covhwjhauprppxtn'
-DEFAULT_FROM_EMAIL = 'sharjeelahmed1906@gmail.com'
+EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+ANYMAIL = {
+    'RESEND_API_KEY': 're_LAXdDTuk_28NVkd52DAVoBPwWGi6cv6Qv',  # paste your key here
+}
+DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'
