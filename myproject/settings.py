@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-h2wvpfgd%8-fj@fkf9b1@q*7&r8qgi(-drt&jgoesb__(8n%j#
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
+CSRF_TRUSTED_ORIGINS = ['https://fyp-partner-finder-app-backend-production.up.railway.app']
 # Application definition
 
 INSTALLED_APPS = [
