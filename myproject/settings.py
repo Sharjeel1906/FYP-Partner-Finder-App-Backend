@@ -71,7 +71,7 @@ ROOT_URLCONF = 'myproject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'FYP_Partner_Finder' / 'templates'],  # ← add this line
+        'DIRS': [BASE_DIR / 'templates'],  # ← changed to root templates
         'APP_DIRS': False,
         'OPTIONS': {
             'context_processors': [
