@@ -26,7 +26,12 @@ class EmailLoginView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
 
 # ------------------ Users ------------------ #
-
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def test_template(request):
+    import django.template.loader as loader
+    t = loader.get_template('registration/password_reset_confirm.html')
+    return Response({"template_path": t.origin.name})
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def forgot_password(request):
