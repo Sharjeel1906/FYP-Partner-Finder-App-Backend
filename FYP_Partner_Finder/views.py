@@ -4,8 +4,6 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth.models import User
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-
-from myproject import settings
 from .serializer import (
     UserDetailSerializer,
     UserProfileSerializer,

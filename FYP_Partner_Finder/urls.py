@@ -2,7 +2,7 @@ from django.urls import path
 from .views import get_all_users_details, get_specific_user_details, update_user, create_user, send_invitation_email, \
     get_all_conversations, get_conversation_messages, create_team, add_member, get_team_details, get_all_teams, \
     EmailLoginView, get_current_user_details, get_my_team, delete_message, delete_conversation, remove_team_member, \
-    request_exit_team, delete_team, download_db, forgot_password, test_template
+    request_exit_team, delete_team, download_db, forgot_password
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
@@ -60,5 +60,4 @@ urlpatterns = [
         template_name='registration/password_reset_complete.html'
     ), name='password_reset_complete'),
 
-    path("test-template/", test_template),
 ]
