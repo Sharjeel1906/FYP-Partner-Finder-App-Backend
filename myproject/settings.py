@@ -150,6 +150,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+EMAIL_USE_TLS = True
+PASSWORD_RESET_TIMEOUT = 3600  # token expires in 1 hour
+
 EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
 ANYMAIL = {
     'RESEND_API_KEY': 're_LAXdDTuk_28NVkd52DAVoBPwWGi6cv6Qv',  # paste your key here

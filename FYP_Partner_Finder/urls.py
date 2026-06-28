@@ -4,10 +4,10 @@ from .views import get_all_users_details, get_specific_user_details, update_user
     EmailLoginView, get_current_user_details, get_my_team, delete_message, delete_conversation, remove_team_member, \
     request_exit_team, delete_team, download_db
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
     TokenRefreshView,
 )
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
@@ -52,4 +52,8 @@ urlpatterns = [
         request_exit_team,
         name="request_exit_team"
     ),
+    path('forgot-password/', auth_views.PasswordResetView.as_view(), name='password_reset'),
+    path('forgot-password/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
 ]
