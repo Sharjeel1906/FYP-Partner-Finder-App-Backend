@@ -19,11 +19,43 @@ from .models import UserProfile, Conversation, Message, Skill, Team, TeamMember,
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .email_utils import send_email_async
 from django.http import FileResponse
-
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 class EmailLoginView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
 
 # ------------------ Users ------------------ #
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def forgot_password(request):
+    email = request.data.get("email", "").strip()
+    if not email:
+        return Response({"error": "Email is required"}, status=400)
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        # Don't reveal if email exists or not
+        return Response({"message": "Reset link sent"}, status=200)
+
+    token = default_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    reset_link = f"https://fyp-partner-finder-app-backend-production.up.railway.app/FYP_Partner_Finder/reset/{uid}/{token}/"
+
+    send_email_async(
+        subject="Reset Your Password — dEVPartner App",
+        body_text=f"Click to reset your password: {reset_link}",
+        recipient_email=email,
+        body_html=f"""
+        <p>Hello {user.username},</p>
+        <p>Click the link below to reset your password. It expires in 1 hour.</p>
+        <a href="{reset_link}">Reset my password</a>
+        """
+    )
+
+    return Response({"message": "Reset link sent"}, status=200)
 def download_db(request):
     return FileResponse(
         open('/app/db.sqlite3', 'rb'),

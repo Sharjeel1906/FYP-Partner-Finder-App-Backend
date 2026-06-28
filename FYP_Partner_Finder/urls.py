@@ -2,7 +2,7 @@ from django.urls import path
 from .views import get_all_users_details, get_specific_user_details, update_user, create_user, send_invitation_email, \
     get_all_conversations, get_conversation_messages, create_team, add_member, get_team_details, get_all_teams, \
     EmailLoginView, get_current_user_details, get_my_team, delete_message, delete_conversation, remove_team_member, \
-    request_exit_team, delete_team, download_db
+    request_exit_team, delete_team, download_db, forgot_password
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
@@ -52,8 +52,7 @@ urlpatterns = [
         request_exit_team,
         name="request_exit_team"
     ),
-    path('forgot-password/', auth_views.PasswordResetView.as_view(), name='password_reset'),
-    path('forgot-password/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
+    path("forgot-password/", forgot_password, name="forgot-password"),
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
 ]
