@@ -49,13 +49,129 @@ def forgot_password(request):
         body_text=f"Click to reset your password: {reset_link}",
         recipient_email=email,
         body_html=f"""
-        <p>Hello {user.username},</p>
-        <p>Click the link below to reset your password. It expires in 1 hour.</p>
-        <a href="{reset_link}">Reset my password</a>
-        """
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin:0; padding:0; background-color:#f0f2f5; font-family: 'Arial', sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f2f5; padding: 48px 0;">
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10);">
+
+              <!-- Header -->
+              <tr>
+                <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 44px 48px 36px 48px; text-align:center;">
+                  <p style="color:rgba(255,255,255,0.75); margin:0 0 10px 0; font-size:12px; text-transform:uppercase; letter-spacing:2px;">
+                    dEVPartner App
+                  </p>
+                  <h1 style="color:#ffffff; margin:0 0 8px 0; font-size:28px; font-weight:700; letter-spacing:0.3px;">
+                    Password Reset
+                  </h1>
+                  <p style="color:rgba(255,255,255,0.80); margin:0; font-size:14px;">
+                    Click below to set a new password
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Sender Badge -->
+              <tr>
+                <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 0 48px 32px 48px; text-align:center;">
+                  <table cellpadding="0" cellspacing="0" align="center">
+                    <tr>
+                      <td style="background-color:#ffffff; border-radius:50px; padding: 10px 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.15);">
+                        <span style="color:#667eea; font-size:15px; font-weight:700;">
+                          🔐 Password reset requested
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Body -->
+              <tr>
+                <td style="padding: 44px 48px 12px 48px;">
+                  <p style="color:#222222; font-size:17px; font-weight:600; margin:0 0 24px 0;">
+                    Hello {user.username},
+                  </p>
+                  <p style="color:#555555; font-size:15px; line-height:1.9; margin:0 0 18px 0;">
+                    We received a request to reset your password. Click the button below to set a new one.
+                    This link expires in <strong style="color:#333333;">1 hour</strong>.
+                  </p>
+                  <p style="color:#555555; font-size:15px; line-height:1.9; margin:0 0 32px 0;">
+                    If you didn't request this, you can safely ignore this email — your password won't change.
+                  </p>
+
+                  <!-- Reset Button -->
+                  <table cellpadding="0" cellspacing="0" style="margin: 0 auto 32px;">
+                    <tr>
+                      <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius:30px; padding:14px 36px; text-align:center;">
+                        <a href="{reset_link}" style="color:#ffffff; font-size:16px; font-weight:700; text-decoration:none; letter-spacing:0.5px;">
+                          RESET MY PASSWORD
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Note Box -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
+                    <tr>
+                      <td style="background-color:#f8f9ff; border-left:4px solid #667eea; border-radius:8px; padding:18px 24px;">
+                        <p style="margin:0 0 6px 0; color:#667eea; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">
+                          🔒 Security tip
+                        </p>
+                        <p style="margin:0; color:#444444; font-size:14px; line-height:1.7;">
+                          Never share this link with anyone. dEVPartner staff will never ask for your password.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Signature -->
+              <tr>
+                <td style="padding: 0 48px 36px 48px;">
+                  <hr style="border:none; border-top:1px solid #eeeeee; margin:0 0 24px 0;">
+                  <p style="color:#555555; font-size:15px; line-height:1.8; margin:0 0 4px 0;">
+                    Regards,
+                  </p>
+                  <table cellpadding="0" cellspacing="0" style="margin-top:12px;">
+                    <tr>
+                      <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius:8px; padding:12px 28px;">
+                        <span style="color:#ffffff; font-size:15px; font-weight:700;">
+                          dEVPartner App
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="background-color:#f8f9ff; padding:24px 48px; text-align:center; border-top:1px solid #eeeeee;">
+                  <p style="color:#aaaaaa; font-size:12px; margin:0; line-height:1.8;">
+                    This email was sent via <strong>dEVPartner App</strong>.<br>
+                    If you did not request a password reset, please ignore this email.
+                  </p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    """
     )
 
     return Response({"message": "Reset link sent"}, status=200)
+
 def download_db(request):
     return FileResponse(
         open('/app/db.sqlite3', 'rb'),
