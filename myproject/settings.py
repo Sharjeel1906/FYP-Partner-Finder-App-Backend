@@ -12,7 +12,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
-
+import os
+from decouple import config
+import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -102,10 +104,11 @@ CHANNEL_LAYERS = {
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 SIMPLE_JWT = {
@@ -156,6 +159,6 @@ PASSWORD_RESET_TIMEOUT = 3600  # token expires in 1 hour
 
 EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
 ANYMAIL = {
-    'RESEND_API_KEY': 're_LAXdDTuk_28NVkd52DAVoBPwWGi6cv6Qv',  # paste your key here
+    'RESEND_API_KEY': config('RESEND_API_KEY'),
 }
 DEFAULT_FROM_EMAIL = 'dEVPartner <onboarding@resend.dev>'
