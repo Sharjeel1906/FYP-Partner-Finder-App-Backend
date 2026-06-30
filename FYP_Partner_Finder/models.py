@@ -43,7 +43,6 @@ class UserProfile(models.Model):
     class_name = models.CharField(max_length=100)
     program = models.CharField(max_length=100)
 
-    semester = models.CharField()
     domain = models.CharField(max_length=100)
     experience = models.CharField(max_length=100)
 
