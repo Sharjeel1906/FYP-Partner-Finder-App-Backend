@@ -38,7 +38,7 @@ class UserProfile(models.Model):
     gender = models.CharField(max_length=10)
     role = models.CharField(max_length=20)
     semester = models.CharField(max_length=20)
-    about = models.TextField(max_length=500)
+    about = models.TextField(max_length=500,blank=True)
     section = models.CharField(max_length=200)
     class_name = models.CharField(max_length=100)
     program = models.CharField(max_length=100)
