@@ -35,10 +35,9 @@ class TeamMember(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    gender = models.CharField()
-    role = models.CharField()
-    about = models.TextField()
-
+    gender = models.CharField(max_length=10)
+    role = models.CharField(max_length=20)
+    semester = models.CharField(max_length=20)
     section = models.CharField(max_length=200)
     class_name = models.CharField(max_length=100)
     program = models.CharField(max_length=100)
